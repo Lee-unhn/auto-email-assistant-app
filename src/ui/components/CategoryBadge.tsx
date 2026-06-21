@@ -6,7 +6,7 @@ export function CategoryBadge({ category }: { category: Category }) {
   return (
     <span className="badge" title={def.action}>
       <span className="swatch" style={{ background: def.color }} />
-      {def.label} · {def.zh}
+      {def.zh}
     </span>
   )
 }

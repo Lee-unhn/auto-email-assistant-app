@@ -52,9 +52,9 @@ export function Settings({ settings, onSave }: Props) {
 
   return (
     <div style={{ maxWidth: 720, display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {saved && <div style={{ color: 'var(--success)', fontWeight: 600 }}>{saved}</div>}
+      {saved && <span className="badge ok">{saved}</span>}
       <div className="card">
-        <div className="section-title" style={{ marginTop: 0 }}>LLM 金鑰（加密存於本機 safeStorage，永不上傳/記錄）</div>
+        <div className="section-title" style={{ marginTop: 0 }}>AI 金鑰（加密存在你的電腦，不會上傳）</div>
         <div className="grid2">
           <div>
             <label className="meta">Gemini API Key {settings.hasGeminiKey && '· 已設定 ✓'}</label>
@@ -78,7 +78,7 @@ export function Settings({ settings, onSave }: Props) {
       </div>
 
       <div className="card">
-        <div className="section-title" style={{ marginTop: 0 }}>模型</div>
+        <div className="section-title" style={{ marginTop: 0 }}>進階：AI 模型</div>
         <div className="grid2">
           <div>
             <label className="meta">Gemini 模型</label>
@@ -90,7 +90,7 @@ export function Settings({ settings, onSave }: Props) {
           </div>
         </div>
         <div style={{ marginTop: 12 }}>
-          <label className="meta">Gemini 每分鐘請求上限 RPM（免費約 10；付費可調高）</label>
+          <label className="meta">Gemini 每分鐘查詢上限（免費帳號約 10）</label>
           <input className="field" style={{ marginTop: 6, maxWidth: 140 }} type="number" min={1} value={s.geminiRpm}
             onChange={(e) => patch({ geminiRpm: Math.max(1, Number(e.target.value) || 10) })} />
         </div>
@@ -99,8 +99,8 @@ export function Settings({ settings, onSave }: Props) {
       <div className="card">
         <div className="section-title" style={{ marginTop: 0 }}>郵件來源</div>
         <select className="field" value={s.mailSource} onChange={(e) => patch({ mailSource: e.target.value as AppSettings['mailSource'] })}>
-          <option value="gmail">真實 Gmail（IMAP app-password，讀取+草稿存 Drafts，不寄）</option>
-          <option value="sample">樣本（內建範例信，免帳密）</option>
+          <option value="gmail">我的 Gmail（讀信、把草稿存到 Gmail 草稿匣，不會自動寄）</option>
+          <option value="sample">範例信（內建，免帳密，先試用）</option>
         </select>
         {s.mailSource === 'gmail' && (
           <div style={{ marginTop: 12 }}>
@@ -115,7 +115,7 @@ export function Settings({ settings, onSave }: Props) {
           </div>
         )}
         <div className="meta" style={{ marginTop: 8 }}>
-          本機材料掃描範圍（逗號分隔）
+          要搜尋的資料夾（用逗號分隔）
         </div>
         <input
           className="field"
@@ -144,30 +144,30 @@ export function Settings({ settings, onSave }: Props) {
           ⚠ 若你的 Google 行事曆是公開/共用的，私人行程會被外部看到。確定需要再開啟。
         </div>
         {cfg.googleCalendarEnabled && (
-          <input className="field" style={{ marginTop: 8 }} placeholder="Google 行事曆 Apps Script /exec 網址（見 google-calendar.gs）"
+          <input className="field" style={{ marginTop: 8 }} placeholder="貼上你的 Google 行事曆連結網址"
             value={cfg.calendarWebhook ?? ''} onChange={(e) => patchCfg({ calendarWebhook: e.target.value })} />
         )}
       </div>
 
       <div className="card">
-        <div className="section-title" style={{ marginTop: 0 }}>排程（app 開啟時生效）</div>
+        <div className="section-title" style={{ marginTop: 0 }}>自動整理時間（App 開著才會跑）</div>
         <div className="row">
           <input className="field" style={{ maxWidth: 180 }} value={s.scheduleCron} onChange={(e) => patch({ scheduleCron: e.target.value })} />
           <label className="row" style={{ gap: 6 }}>
             <input type="checkbox" checked={s.scheduleEnabled} onChange={(e) => patch({ scheduleEnabled: e.target.checked })} />
-            <span>啟用每日自動分流</span>
+            <span>每天自動整理收件匣</span>
           </label>
         </div>
-        <div className="meta" style={{ marginTop: 6 }}>cron 格式（分 時 日 月 週）。預設 7 8 * * * = 每日 08:07。</div>
+        <div className="meta" style={{ marginTop: 6 }}>時間格式：分 時 日 月 週。預設 7 8 * * * = 每天早上 08:07。</div>
         <label className="row" style={{ gap: 6, marginTop: 10 }}>
           <input type="checkbox" checked={s.digestEnabled} onChange={(e) => patch({ digestEnabled: e.target.checked })} />
-          <span>每次分流後寄「每日摘要」email 給我本人（只寄給自己，不寄他人）</span>
+          <span>每次整理後，寄一封「每日摘要」給我自己（只寄給自己）</span>
         </label>
         <label className="row" style={{ gap: 6, marginTop: 10 }}>
           <input type="checkbox" checked={s.jarvisBridgeEnabled} onChange={(e) => patch({ jarvisBridgeEnabled: e.target.checked })} />
-          <span>送事件給 Jarvis（語音/通知面）— 安全/金流/截止/草稿</span>
+          <span>把重要事項念出來（安全／金流／截止／草稿，需先安裝語音模組）</span>
         </label>
-        <input className="field" style={{ marginTop: 6 }} placeholder="Jarvis 事件資料夾（留空＝預設 ~/.jarvis-events/inbox）"
+        <input className="field" style={{ marginTop: 6 }} placeholder="語音事件資料夾（留空＝使用預設）"
           value={s.jarvisEventsDir} onChange={(e) => patch({ jarvisEventsDir: e.target.value })} />
       </div>
     </div>

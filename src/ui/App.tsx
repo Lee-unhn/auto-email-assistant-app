@@ -12,7 +12,7 @@ function friendlyError(m: string): { msg: string; toSettings: boolean } {
     return { msg: '還沒設定 AI 金鑰 —— 請到「設定」輸入 Gemini 金鑰。', toSettings: true }
   if (/(imap|auth|login|connect|econn|535|invalid cred)/i.test(m))
     return { msg: 'Gmail 連線失敗 —— 請確認帳號與應用程式密碼正確、網路正常。', toSettings: true }
-  return { msg: '執行時發生問題：' + m.slice(0, 120), toSettings: false }
+  return { msg: '有點小狀況，請稍後再試一次。', toSettings: false }
 }
 
 export function App() {
@@ -74,15 +74,15 @@ export function App() {
         <div className="brand">
           <div className="dot" />
           <div>
-            <h1>Auto Email Assistant</h1>
-            <small>dual-LLM · local-first</small>
+            <h1>郵件小幫手</h1>
+            <small>你的私人郵件小幫手</small>
           </div>
         </div>
-        <button className={`nav-btn ${view === 'inbox' ? 'active' : ''}`} onClick={() => setView('inbox')}>📥 收件匣分流</button>
-        <button className={`nav-btn ${view === 'calendar' ? 'active' : ''}`} onClick={() => setView('calendar')}>📅 行事曆（私密）</button>
+        <button className={`nav-btn ${view === 'inbox' ? 'active' : ''}`} onClick={() => setView('inbox')}>📥 收件匣</button>
+        <button className={`nav-btn ${view === 'calendar' ? 'active' : ''}`} onClick={() => setView('calendar')}>📅 行事曆</button>
         <button className={`nav-btn ${view === 'settings' ? 'active' : ''}`} onClick={() => setView('settings')}>⚙ 設定</button>
 
-        <div className="side-label">LLM 引擎</div>
+        <div className="side-label">AI 模型</div>
         <div style={{ padding: '0 6px' }}>
           <div className="seg">
             <button className={settings.provider === 'gemini' ? 'on' : ''} onClick={() => saveSettings({ provider: 'gemini' })}>Gemini</button>
@@ -90,33 +90,32 @@ export function App() {
           </div>
           <div className="meta" style={{ marginTop: 8 }}>
             {settings.provider === 'gemini'
-              ? settings.hasGeminiKey ? '✓ Gemini 金鑰已設定' : '⚠ 需在設定輸入金鑰'
-              : settings.hasClaudeKey ? '✓ Claude 金鑰已設定' : 'ℹ 無 API key → 走 Claude Code CLI 訂閱'}
+              ? settings.hasGeminiKey ? '✓ Gemini 金鑰已設定' : '⚠ 請先到設定輸入金鑰'
+              : settings.hasClaudeKey ? '✓ Claude 金鑰已設定' : 'ℹ 將使用你的 Claude 訂閱'}
           </div>
         </div>
 
         <div className="spacer" />
-        <div className="side-label">硬規則</div>
-        <div className="meta" style={{ padding: '0 8px', lineHeight: 1.7 }}>
-          不寄信 · 不碰安全設定<br />不動金流 · 不刪任何東西<br />草稿/事件皆「待確認」
+        <div className="meta" style={{ padding: '0 8px 4px', lineHeight: 1.6 }}>
+          只幫你整理、擬草稿，不會自動寄信。
         </div>
       </aside>
 
       <main className="main">
         <div className="topbar">
-          <h2>{view === 'inbox' ? '收件匣分流' : view === 'calendar' ? '行事曆（私密 · 只存本機）' : '設定'}</h2>
+          <h2>{view === 'inbox' ? '收件匣' : view === 'calendar' ? '行事曆（只存本機）' : '設定'}</h2>
           {view === 'inbox' && (
             <>
               <div className="spacer" style={{ flex: 1 }} />
               {run && (
                 <div className="chips">
                   {Object.entries(stats).map(([k, v]) => (
-                    <span className="chip" key={k}>{CATEGORY_MAP[k as keyof typeof CATEGORY_MAP]?.label ?? k} <b>{v}</b></span>
+                    <span className="chip" key={k}>{CATEGORY_MAP[k as keyof typeof CATEGORY_MAP]?.zh ?? k} <b>{v}</b></span>
                   ))}
                 </div>
               )}
               <button className="btn primary" disabled={running} onClick={runTriage}>
-                {running ? '分流中…' : '▶ 執行分流'}
+                {running ? '整理中…' : '▶ 整理收件匣'}
               </button>
             </>
           )}

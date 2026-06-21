@@ -55,21 +55,26 @@ export function CalendarView() {
       {loading ? (
         <div className="muted">載入中…</div>
       ) : !days.length ? (
-        <div className="card muted">目前沒有近期事件。分流郵件後,含日期的事項會自動排進這裡(私密,不會上 Google)。</div>
+        <div className="empty-state">
+          <div className="ico">🗓</div>
+          <div>目前沒有近期行程</div>
+          <div className="hint">整理收件匣後，信裡有日期的事項會自動排到這裡（只存這台電腦，不會外流）。</div>
+        </div>
       ) : (
         days.map((day) => (
           <div key={day} style={{ marginBottom: 14 }}>
             <div className="section-title" style={{ marginTop: 0 }}>{day}</div>
             {groups[day].map((e) => (
-              <div className="card" key={e.id} style={{ marginBottom: 8, borderColor: conflictIds.has(e.id) ? 'var(--danger)' : undefined }}>
-                <div style={{ fontWeight: 600 }}>
-                  {conflictIds.has(e.id) && <span style={{ color: 'var(--danger)' }}>⚠ 衝突 </span>}
-                  {e.summary}
+              <div className={`card${conflictIds.has(e.id) ? ' conflict' : ''}`} key={e.id} style={{ marginBottom: 8 }}>
+                <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {conflictIds.has(e.id) && <span className="badge danger">⚠ 時段衝突</span>}
+                  <span>{e.summary.replace(/^\[自動[^\]]*\]\s*/, '')}</span>
+                  <span className="badge warn">待你確認</span>
                 </div>
-                <div className="meta" style={{ marginTop: 4 }}>
-                  {e.startISO.slice(11, 16)}–{e.endISO.slice(11, 16)} ({e.timeZone}) · 提前提醒 {e.reminders.map((m) => (m >= 60 ? `${m / 60}h` : `${m}m`)).join(' / ')} · 來源 {e.source}
+                <div className="meta" style={{ marginTop: 5 }}>
+                  {e.startISO.slice(11, 16)}–{e.endISO.slice(11, 16)} · 提前提醒 {e.reminders.map((m) => (m >= 60 ? `${m / 60} 小時前` : `${m} 分鐘前`)).join('、')}
                 </div>
-                {e.description && <div className="meta" style={{ marginTop: 6, whiteSpace: 'pre-wrap' }}>{e.description.slice(0, 200)}</div>}
+                {e.description && <div className="meta" style={{ marginTop: 6, whiteSpace: 'pre-wrap' }}>{e.description.replace(/^由 auto-email-assistant[^\n]*\n?/, '').slice(0, 200)}</div>}
               </div>
             ))}
           </div>

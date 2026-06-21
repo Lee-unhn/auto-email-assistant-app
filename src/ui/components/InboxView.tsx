@@ -38,7 +38,11 @@ export function InboxView({ threads, run, liveTrails }: Props) {
 
       <div className="detail">
         {!thread ? (
-          <div className="muted">選一封郵件查看。</div>
+          <div className="empty-state">
+            <div className="ico">📭</div>
+            <div>選一封郵件查看</div>
+            <div className="hint">點左側任一封信，這裡會顯示它是什麼、要不要回、有沒有行程。</div>
+          </div>
         ) : (
           <>
             <div className="card">
@@ -58,15 +62,11 @@ export function InboxView({ threads, run, liveTrails }: Props) {
 
             {outcome ? (
               <>
-                <div className="section-title">分類</div>
+                <div className="section-title">這封信是什麼</div>
                 <div className="card">
-                  <CategoryBadge category={outcome.classification.category} />
-                  {outcome.classification.urgency === 'high' && (
-                    <span className="badge" style={{ marginLeft: 8, color: 'var(--danger)', borderColor: 'var(--danger)' }}>🔴 高優先</span>
-                  )}
-                  <span className="meta" style={{ marginLeft: 10 }}>
-                    信心 {Math.round(outcome.classification.confidence * 100)}% ·{' '}
-                    {outcome.classification.needsCollaboration ? '需協作' : '單一 agent'}
+                  <span className="row" style={{ gap: 8 }}>
+                    <CategoryBadge category={outcome.classification.category} />
+                    {outcome.classification.urgency === 'high' && <span className="badge danger">🔴 高優先</span>}
                   </span>
                   <div style={{ marginTop: 8, color: 'var(--fg-2)' }}>{outcome.classification.reason}</div>
                   {outcome.flagNote && (
@@ -79,13 +79,16 @@ export function InboxView({ threads, run, liveTrails }: Props) {
 
                 {outcome.events && outcome.events.length > 0 && (
                   <>
-                    <div className="section-title">行事曆事件（{outcome.events.length} 筆 · 已寫進私密行事曆）</div>
+                    <div className="section-title">行事曆（已加 {outcome.events.length} 筆到你的私人行事曆）</div>
                     {outcome.events.map((ev, i) => (
                       <div className="card" key={i} style={{ marginBottom: 8 }}>
-                        <div style={{ fontWeight: 600 }}>{ev.summary}</div>
+                        <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span>{ev.summary.replace(/^\[自動[^\]]*\]\s*/, '')}</span>
+                          <span className="badge warn">待你確認</span>
+                        </div>
                         <div className="meta" style={{ marginTop: 4 }}>
-                          {ev.startISO} → {ev.endISO} ({ev.timeZone}) · 提前提醒{' '}
-                          {ev.reminders.map((m) => `${m}分`).join(' / ')}
+                          {ev.startISO.slice(0, 16).replace('T', ' ')} → {ev.endISO.slice(11, 16)} · 提前提醒{' '}
+                          {ev.reminders.map((m) => (m >= 60 ? `${m / 60} 小時前` : `${m} 分鐘前`)).join('、')}
                         </div>
                       </div>
                     ))}
@@ -94,14 +97,14 @@ export function InboxView({ threads, run, liveTrails }: Props) {
 
                 {outcome.draft && (
                   <>
-                    <div className="section-title">回覆草稿（永不自動寄出）</div>
+                    <div className="section-title">回覆草稿（要你按下寄出才會送）</div>
                     <div className="card">
                       <div className="meta">主旨：{outcome.draft.subject} · 收件：{outcome.draft.to.join(', ')}</div>
                       <textarea className="draft" defaultValue={outcome.draft.body} style={{ marginTop: 8 }} />
                       {outcome.draftPath && (
                         <div className="row" style={{ marginTop: 8 }}>
                           <button className="btn sm" onClick={() => window.api.revealPath(outcome.draftPath!)}>
-                            在資料夾顯示 .eml
+                            打開草稿檔
                           </button>
                           <span className="meta">由你本人確認後再寄。</span>
                         </div>
@@ -112,12 +115,12 @@ export function InboxView({ threads, run, liveTrails }: Props) {
 
                 {outcome.materials && outcome.materials.length > 0 && (
                   <>
-                    <div className="section-title">找到的材料（本機 + 網路）</div>
+                    <div className="section-title">相關資料（電腦裡＋網路上）</div>
                     <div className="card scrollbox">
                       {outcome.materials.map((m, i) => (
                         <div key={i} style={{ padding: '6px 0', borderBottom: '1px solid var(--border-soft)' }}>
                           <div>
-                            <span className="chip" style={{ marginRight: 8 }}>{m.source}</span>
+                            <span className="chip" style={{ marginRight: 8 }}>{(({ local: '電腦', web: '網路', drive: '雲端' } as Record<string, string>)[m.source]) ?? m.source}</span>
                             {m.ref?.startsWith('http') ? (
                               <a className="link" href={m.ref} target="_blank" rel="noreferrer">{m.title}</a>
                             ) : m.ref ? (
@@ -134,11 +137,15 @@ export function InboxView({ threads, run, liveTrails }: Props) {
                 )}
               </>
             ) : (
-              <div className="card muted" style={{ marginTop: 16 }}>尚未分流。點上方「執行分流」。</div>
+              <div className="empty-state" style={{ marginTop: 16 }}>
+                <div className="ico">⚡</div>
+                <div>還沒整理這封信</div>
+                <div className="hint">點上方「整理收件匣」，就會分析這封信並擬好需要的草稿。</div>
+              </div>
             )}
 
-            <div className="section-title">Agent 軌跡</div>
-            <AgentPanel events={trail} title="🤝 此郵件的 agent 協作" />
+            <div className="section-title">處理過程</div>
+            <AgentPanel events={trail} title="處理過程" />
           </>
         )}
       </div>

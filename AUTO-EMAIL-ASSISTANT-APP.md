@@ -6,7 +6,8 @@
 
 ---
 
-## 最新狀態（2026-06-21，多 agent 巡查+硬化後）
+## 最新狀態（2026-06-21，多 agent 巡查+硬化+介面重設計後）
+- **介面重設計（UIUX/美術 agent + open-design linear-app）**：套用完整 Linear 設計語言（cv01/ss03 字體、510 字重、亮度階梯層次、半透明白邊框、accent 只用在主要按鈕/選取、自訂捲軸、空狀態、focus ring）。**所有後台/開發字樣移出介面**——刪掉側欄「硬規則」區塊、agent 類別名（Classifier/Orchestrator…→分類/統籌…）、狀態英文（start/done→進行中/完成）、分類英文 ID、`[自動·待確認]` 前綴（改成「待你確認」標籤）、IMAP/app-password/safeStorage/RPM/cron/Jarvis 路徑等 jargon 全換成非技術使用者看得懂的話。這些規則仍在程式層強制執行（後台），只是不顯示在前端。
 - **行事曆預設＝app 私密 JSON 行事曆**（不是 .ics；.ics 已退役）；Google 為 opt-in。多事件抽取（一信多約會）+ **時段衝突判別**（同會議合併／不同警告）。
 - 真 Gmail（IMAP app-password，**app 內輸入免改檔**）；雙 LLM 自動選（Claude CLI／Gemini）。
 - 耐用佇列 + **GUI 與 daemon 共用單一 messageId 帳本**（不重複處理）；關鍵寫入皆原子化。
