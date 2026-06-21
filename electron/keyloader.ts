@@ -51,7 +51,7 @@ async function ensureSecretsDir(): Promise<void> {
   await fs.mkdir(SECRETS, { recursive: true })
 }
 
-// Written by the in-app Settings fields so a non-technical family member never
+// Written by the in-app Settings fields so a non-technical user never
 // edits files. keyloader (used by BOTH the GUI and the headless daemon) reads
 // these, so entering creds once in the app makes the background runner work too.
 export async function writeGmailCreds(user: string, pass: string): Promise<void> {

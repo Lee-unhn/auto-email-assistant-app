@@ -2,7 +2,7 @@
  * google-calendar.gs — 把事件自動建進「本帳號的 Google 行事曆」（含提前提醒）。
  * 給 auto-email-assistant 用，零 Google Cloud、零 OAuth client。
  *
- * 部署（每位家人各做一次，在他/她自己的 Google 帳號下）：
+ * 部署（每位使用者各做一次，在他/她自己的 Google 帳號下）：
  *  1) script.google.com → 新專案 → 貼上本檔
  *  2) 左下「專案設定」→ 時區設成 Asia/Taipei（重要：事件時間才正確）
  *  3) 部署 → 新增部署作業 → 類型「網頁應用程式」

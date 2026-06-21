@@ -4,7 +4,7 @@
 # 用法： powershell -ExecutionPolicy Bypass -File run-assistant.ps1 [intervalSec] [provider]
 param(
   [string]$IntervalSec = "300",
-  [string]$Provider = "auto"  # auto = 有 Claude Code 就用 claude，否則 gemini（家人電腦多半沒 claude）
+  [string]$Provider = "auto"  # auto = 有 Claude Code 就用 claude，否則 gemini（使用者電腦多半沒 claude）
 )
 $ErrorActionPreference = "Continue"
 if ($Provider -eq "auto") {
@@ -13,12 +13,12 @@ if ($Provider -eq "auto") {
 $app = $PSScriptRoot                       # 不寫死路徑：用本檔所在目錄
 $jarvis = "C:\dev\jarvis"
 $jarvisPy = Join-Path $jarvis ".venv\Scripts\python.exe"
-$hasJarvis = Test-Path $jarvisPy           # 家人電腦多半沒 Jarvis → 跳過語音，不 crash-loop
+$hasJarvis = Test-Path $jarvisPy           # 使用者電腦多半沒 Jarvis → 跳過語音，不 crash-loop
 $log = Join-Path $env:USERPROFILE ".auto-email-assistant-realrun\logs"
 New-Item -ItemType Directory -Force $log | Out-Null
 
 function Spawn-Watcher {
-  # queue 模式為預設：耐用佇列 + 失敗重試（家人無人看管也不丟信）
+  # queue 模式為預設：耐用佇列 + 失敗重試（使用者無人看管也不丟信）
   Start-Process -FilePath "cmd.exe" `
     -ArgumentList "/c npx tsx queue.ts run --watch --interval $IntervalSec --provider $Provider 1>> `"$log\watcher.log`" 2>&1" `
     -WorkingDirectory $app -WindowStyle Hidden -PassThru

@@ -3,7 +3,7 @@ import os from 'os'
 import path from 'path'
 import { writeJsonAtomic } from '../util/atomicWrite'
 
-// Per-machine config (one family member per PC). Holds the Apps Script webhook URLs
+// Per-machine config (one user per PC). Holds the Apps Script webhook URLs
 // Lee sets up once per person. No secrets here (keys stay in safeStorage / ~/.claude).
 export interface LocalConfig {
   // Default calendar = the app's own PRIVATE local calendar (always on).

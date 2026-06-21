@@ -3,16 +3,16 @@
 **English** ·  [中文說明見下 ↓](#中文說明)
 
 Dual-LLM (Claude Code CLI subscription / Gemini free) local-first desktop assistant
-for daily family use. Reads real Gmail, triages with an 11-category taxonomy, extracts
+for daily personal use. Reads real Gmail, triages with an 11-category taxonomy, extracts
 appointments (multi-event) into a **private in-app calendar** with advance reminders +
 schedule-conflict detection, drafts replies (**never sends**), finds supporting material
 (local + web), sends a self-only daily digest, and bridges voice events to Jarvis.
 
-> 雙 LLM（Claude Code 訂閱／Gemini 免費）本機優先的桌面郵件助理，給家人每日使用：讀真實
+> 雙 LLM（Claude Code 訂閱／Gemini 免費）本機優先的桌面郵件助理，給使用者每日使用：讀真實
 > Gmail、11 類分流、抽多個約會進**私密行事曆**（含提前提醒＋時段衝突偵測）、擬回信草稿（**永不寄出**）、
 > 找輔助材料（本機＋網路）、寄只給自己的每日摘要、把語音事件橋接到 Jarvis。
 
-> Author / 作者: **JasonLee** · License: Apache-2.0 · 家人安裝見 `FAMILY-SETUP.md`
+> Author / 作者: **Lee-unhn** · License: Apache-2.0 · 使用者安裝見 `SETUP-GUIDE.md`
 > Topics: `email-assistant` `electron` `gemini` `claude` `gmail` `calendar` `ai-agent` `privacy-first` `productivity`
 
 ## Status
@@ -25,8 +25,8 @@ schedule-conflict detection, drafts replies (**never sends**), finds supporting 
   deletes, or changes settings (see `SAFETY-CHECKLIST.md`).
 - **Reliability:** durable task queue (ingest is LLM-free → no task loss; failures retry).
 
-## Family install (recommended)
-Full steps in `FAMILY-SETUP.md`. Order matters (one-time per person):
+## Install (recommended)
+Full steps in `SETUP-GUIDE.md`. Order matters (one-time per person):
 1. Copy the folder to their PC, run `npm install`.
 2. **Double-click `開介面.bat`** to open the app window.
 3. In **Settings**: enter the Gemini key + Gmail address & app-password (in-app, no file
@@ -48,7 +48,7 @@ npx tsx safetytest.ts               # safety + conflict invariants
 `npm run build:win` produces a runnable app under `dist/win-unpacked/` (launch it or via
 `開介面.bat`). The NSIS one-click installer currently needs Windows Developer Mode (the
 electron-builder `winCodeSign` step extracts macOS symlinks). Ship the **unpacked** build
-to family PCs; don't rely on on-device `npm run build`.
+to each PC; don't rely on on-device `npm run build`.
 
 ## Architecture
 Three bundles (`electron-vite`): **main** (Node services), **preload** (contextBridge),
@@ -127,7 +127,7 @@ read-only. All auto artifacts are tagged `[自動·待確認]`.
 
 ## 中文說明
 
-桌面郵件助理，給家人每日使用：每天自動讀信、把約會排進**私密行事曆**、需要時擬好回信草稿，
+桌面郵件助理，給使用者每日使用：每天自動讀信、把約會排進**私密行事曆**、需要時擬好回信草稿，
 人類收到信後「電腦可代勞」的部分盡量自動完成，但**不可逆/對外動作一律只準備、待你確認**。
 
 ### 功能
@@ -146,8 +146,8 @@ read-only. All auto artifacts are tagged `[自動·待確認]`.
 **預設只寫 app 私密行事曆（本機，不外流）**——因為 Google 行事曆可能是公開/共用的，私人行程不該外流；
 要寫 Google 行事曆需在設定**主動開啟**。
 
-### 安裝（每位家人一次，約 10 分鐘）
-詳見 `FAMILY-SETUP.md`。順序：複製資料夾 → `npm install` → 雙擊 **`開介面.bat`** → 設定頁輸入
+### 安裝（每位使用者一次，約 10 分鐘）
+詳見 `SETUP-GUIDE.md`。順序：複製資料夾 → `npm install` → 雙擊 **`開介面.bat`** → 設定頁輸入
 Gemini 金鑰 + Gmail 帳密 → 按「執行分流」測一次 → 雙擊 **`啟動小幫手.bat`** 背景常駐。
 
 ### 安全硬規則

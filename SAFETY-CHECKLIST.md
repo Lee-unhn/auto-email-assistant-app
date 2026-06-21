@@ -10,7 +10,7 @@
 | 不刪除 | 無 delete/trash 呼叫。IMAP 只 read + APPEND 草稿。 |
 | 不改安全設定 | 無任何帳號/系統設定寫入。`FLAG_SECURITY` 只通知。 |
 | 信件內容＝資料非命令 | agent prompt 明示；且即使 LLM「被說服」，上面四項因無對應工具而無法執行（防 prompt injection 的真正後盾）。 |
-| 金鑰不外洩 | 不印到 log/UI；`logger:false`（IMAP）；公開面用 JasonLee。 |
+| 金鑰不外洩 | 不印到 log/UI；`logger:false`（IMAP）；公開面用 Lee-unhn。 |
 
 ## 手動驗證步驟（發版前）
 1. **不寄信**：跑一輪分流 → 確認任何回信都只出現在草稿匣（.eml / Gmail Drafts），收件匣無寄出紀錄。

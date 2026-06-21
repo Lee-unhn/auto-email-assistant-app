@@ -1,11 +1,11 @@
 # Auto Email Assistant — 完整使用報告與說明
-> 2026-06-21 · 給家人每日使用的雙 LLM 桌面郵件助理 · 多 agent 兩輪驗證後
+> 2026-06-21 · 給使用者每日使用的雙 LLM 桌面郵件助理 · 多 agent 兩輪驗證後
 
 ---
 
 ## 1. 驗證結論
 
-**裁決：GO-WITH-NOTES**（可交付家人使用；下列為非阻擋的後續事項）。
+**裁決：GO-WITH-NOTES**（可交付使用者使用；下列為非阻擋的後續事項）。
 
 | 客觀 gate | 結果 |
 |---|---|
@@ -19,7 +19,7 @@
 
 ---
 
-## 2. 它幫家人做什麼（自動）
+## 2. 它幫使用者做什麼（自動）
 
 人類收到信後「電腦可操作的部分」盡量自動完成：
 
@@ -36,18 +36,18 @@
 
 ---
 
-## 3. 家人怎麼操作（極簡）
+## 3. 使用者怎麼操作（極簡）
 
-設定好後家人**幾乎不用動**：
+設定好後使用者**幾乎不用動**：
 - 每天：行事曆自動出現行程、收到一封摘要 email。
 - 想看細節：**雙擊 `開介面.bat`** → 「📅 行事曆（私密）」看行程、「📥 收件匣分流」看分類與草稿。
 - 回信：草稿在 Gmail 草稿匣，本人按寄出。
 
 ---
 
-## 4. 你的一次性設定（每位家人約 10 分鐘）
+## 4. 你的一次性設定（每位使用者約 10 分鐘）
 
-> 順序重要：先開介面設金鑰 → 再啟動背景。詳見 `FAMILY-SETUP.md`。
+> 順序重要：先開介面設金鑰 → 再啟動背景。詳見 `SETUP-GUIDE.md`。
 
 1. 複製整個資料夾到他的電腦，跑一次 `npm install`。
 2. 雙擊 **`開介面.bat`** 開介面。
@@ -75,7 +75,7 @@
 ## 6. 多 agent 巡查/驗證做了什麼
 
 - **巡查**（7 agent）：Chief of Staff 定範圍+驗收標準+停止條件 → UX/架構/安全/功能/GitHub重用 5 維度審查 → 統整成有界 P0 清單（明確排除「挖 repo 加功能、OAuth、UI 重設計」等過度工程）。
-- **驗證**（兩輪，各 5-6 agent）：對抗式查核每個 gate、實跑 tsc/build/test。第一輪找到並修：`ev` bug、死碼安全守衛、雙帳本重複處理、非原子寫入、髒日期繞過衝突偵測、家人 onboarding 死路等。第二輪 4 gate 全 pass。
+- **驗證**（兩輪，各 5-6 agent）：對抗式查核每個 gate、實跑 tsc/build/test。第一輪找到並修：`ev` bug、死碼安全守衛、雙帳本重複處理、非原子寫入、髒日期繞過衝突偵測、使用者 onboarding 死路等。第二輪 4 gate 全 pass。
 
 ---
 
@@ -83,11 +83,11 @@
 
 | 項 | 說明 |
 |---|---|
-| 正式安裝檔 | NSIS 簽章需 Windows 開發者模式；現用 unpacked exe + `開介面.bat`。**交付前確認每台家人機已備好 unpacked build**，勿依賴現場 build |
+| 正式安裝檔 | NSIS 簽章需 Windows 開發者模式；現用 unpacked exe + `開介面.bat`。**交付前確認每台使用者機已備好 unpacked build**，勿依賴現場 build |
 | 金鑰儲存 | app-password/Gemini key 明文存 `~/.claude/secrets/*.env`（daemon 需讀）；建議限制該資料夾 ACL 僅本人 |
 | P1 安全強化 | openPath 白名單 / `sandbox:true` / webhook token（縱深防禦，hard-rule 護欄已在） |
 | 功能 | 附件解析、VIP/重要寄件人 urgency 排序（P2，需你決定範圍） |
-| 真機點擊驗證 | code+gate 層已驗；交付前建議一台家人機實跑一次 開介面→設金鑰→背景讀到 |
+| 真機點擊驗證 | code+gate 層已驗；交付前建議一台使用者機實跑一次 開介面→設金鑰→背景讀到 |
 
 ---
 
@@ -101,4 +101,4 @@ npx tsx safetytest.ts            安全/衝突不變式測試
 npx tsc --noEmit                 typecheck
 npm run build:win                打包 → dist/win-unpacked/
 ```
-文件：`README.md`（總覽）、`FAMILY-SETUP.md`（家人安裝）、`SAFETY-CHECKLIST.md`（安全）、`QUEUE.md`（佇列）、`BRIDGE.md`（Jarvis 橋）、架構圖 `docs/diagrams/2026-06-21_.../architecture.html`。
+文件：`README.md`（總覽）、`SETUP-GUIDE.md`（使用者安裝）、`SAFETY-CHECKLIST.md`（安全）、`QUEUE.md`（佇列）、`BRIDGE.md`（Jarvis 橋）、架構圖 `docs/diagrams/2026-06-21_.../architecture.html`。
