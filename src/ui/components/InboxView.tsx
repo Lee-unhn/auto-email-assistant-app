@@ -49,6 +49,11 @@ export function InboxView({ threads, run, liveTrails }: Props) {
               <div style={{ marginTop: 12, color: 'var(--fg-2)', whiteSpace: 'pre-wrap', fontSize: 13 }}>
                 {thread.messages[0]?.body}
               </div>
+              {thread.messages[0]?.attachments?.length ? (
+                <div className="meta" style={{ marginTop: 10 }}>
+                  📎 {thread.messages[0].attachments.length} 個附件：{thread.messages[0].attachments.map((a) => a.filename).join('、')}
+                </div>
+              ) : null}
             </div>
 
             {outcome ? (
@@ -56,6 +61,9 @@ export function InboxView({ threads, run, liveTrails }: Props) {
                 <div className="section-title">分類</div>
                 <div className="card">
                   <CategoryBadge category={outcome.classification.category} />
+                  {outcome.classification.urgency === 'high' && (
+                    <span className="badge" style={{ marginLeft: 8, color: 'var(--danger)', borderColor: 'var(--danger)' }}>🔴 高優先</span>
+                  )}
                   <span className="meta" style={{ marginLeft: 10 }}>
                     信心 {Math.round(outcome.classification.confidence * 100)}% ·{' '}
                     {outcome.classification.needsCollaboration ? '需協作' : '單一 agent'}

@@ -18,7 +18,7 @@ async function main() {
   ok('真重疊仍偵測', overlaps({ startISO: '2026-06-22T09:00:00', endISO: '2026-06-22T10:00:00' }, { startISO: '2026-06-22T09:30:00', endISO: '2026-06-22T10:30:00' }))
 
   // 3) merge heuristic: same merges, short different does NOT false-merge
-  ok('同會議(與/跟)合併', sameMeeting('占暉與OC會議', '占暉跟OC會議'))
+  ok('同會議(與/跟)合併', sameMeeting('客戶與夥伴會議', '客戶跟夥伴會議'))
   ok('短標題不誤合 (晨會 vs 晨跑)', sameMeeting('晨會', '晨跑') === false)
 
   console.log(`\nRESULT: ${pass} passed, ${fail} failed`)

@@ -29,6 +29,9 @@ export class ImapMailProvider implements MailProvider {
 
   private async toThread(uid: string, source: Buffer): Promise<EmailThread> {
     const p = await simpleParser(source)
+    const attachments = (p.attachments ?? [])
+      .filter((a) => a.contentDisposition !== 'inline' || a.filename)
+      .map((a) => ({ filename: a.filename ?? '(未命名)', type: a.contentType ?? '', size: a.size ?? 0 }))
     return {
       id: uid,
       messages: [
@@ -39,7 +42,8 @@ export class ImapMailProvider implements MailProvider {
           subject: p.subject ?? '(no subject)',
           date: (p.date ?? new Date()).toISOString(),
           snippet: (p.text ?? '').replace(/\s+/g, ' ').slice(0, 160),
-          body: (p.text ?? '').slice(0, 8000)
+          body: (p.text ?? '').slice(0, 8000),
+          ...(attachments.length ? { attachments } : {})
         }
       ]
     }

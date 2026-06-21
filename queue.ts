@@ -22,6 +22,7 @@ import { readConfig } from './src/config/localConfig.ts'
 import { localScan } from './electron/localScan.ts'
 import { emitRunToJarvis } from './src/bridge/jarvisBridge.ts'
 import { makeStore, type Task, type TaskStore } from './src/queue/taskStore.ts'
+import { isVip } from './src/rules/vip.ts'
 import { DEFAULT_SETTINGS, type AgentEvent, type ThreadOutcome, type TriageRun } from './src/types.ts'
 
 const OUT = path.join(os.homedir(), '.auto-email-assistant-realrun')
@@ -70,6 +71,10 @@ async function processTasks(store: TaskStore, calendarWebhook: string, googleOn:
     try {
       const o = await orchestrate(thread, ctx)
       if (o.classification.confidence === 0) throw new Error('classify fallback (可能限流)')
+      if (isVip(o.from, settings.vipSenders)) {
+        o.classification.urgency = 'high'
+        if (!o.flagNote && !o.events?.length && !o.draft) o.flagNote = 'VIP 寄件人 — 已標示需你看'
+      }
       // success — persist artifacts
       if (o.events?.length) {
         const conflictMsgs: string[] = []
@@ -132,7 +137,8 @@ async function main() {
     ...DEFAULT_SETTINGS,
     localScanRoots: cfg.localScanRoots ?? DEFAULT_SETTINGS.localScanRoots,
     jarvisBridgeEnabled: cfg.jarvisBridgeEnabled ?? DEFAULT_SETTINGS.jarvisBridgeEnabled,
-    digestEnabled: cfg.digestEnabled ?? DEFAULT_SETTINGS.digestEnabled
+    digestEnabled: cfg.digestEnabled ?? DEFAULT_SETTINGS.digestEnabled,
+    vipSenders: cfg.vipSenders ?? DEFAULT_SETTINGS.vipSenders
   }
   const jarvisOn = effSettings.jarvisBridgeEnabled
   const store = makeStore(sheet || undefined)

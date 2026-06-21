@@ -14,6 +14,7 @@ import { getKey } from './secrets'
 import { readGeminiKey, readGmailCreds } from './keyloader'
 import { saveRun, paths } from './state'
 import { makeStore } from '../src/queue/taskStore'
+import { isVip } from '../src/rules/vip'
 import { localScan } from './localScan'
 
 function fixturesDir(): string {
@@ -99,6 +100,12 @@ export async function runTriage(win: BrowserWindow | null, settings: AppSettings
         classification: { category: 'INFO_SYS', confidence: 0, reason: `orchestrate error: ${e?.message}`, needsCollaboration: false },
         agentTrail: []
       }
+    }
+
+    // VIP sender → always surface + high urgency (even if classified as noise)
+    if (isVip(outcome.from, cfg.vipSenders)) {
+      outcome.classification.urgency = 'high'
+      if (!outcome.flagNote && !outcome.events?.length && !outcome.draft) outcome.flagNote = 'VIP 寄件人 — 已標示需你看'
     }
 
     // Calendar: write each event to the app's PRIVATE calendar; Google only if opted in.

@@ -2,6 +2,12 @@
 
 export type LLMProviderId = 'gemini' | 'claude'
 
+export interface Attachment {
+  filename: string
+  type: string
+  size: number
+}
+
 export interface EmailMessage {
   id: string
   from: string
@@ -10,6 +16,7 @@ export interface EmailMessage {
   date: string // ISO
   snippet: string
   body: string // plain text
+  attachments?: Attachment[]
 }
 
 export interface EmailThread {
@@ -35,6 +42,7 @@ export interface Classification {
   confidence: number // 0..1
   reason: string
   needsCollaboration: boolean
+  urgency?: 'high' | 'normal' | 'low' // piggybacks the classifier call (no extra LLM call)
 }
 
 export interface ExtractedEvent {
@@ -104,6 +112,7 @@ export interface AppSettings {
   digestEnabled: boolean
   jarvisBridgeEnabled: boolean
   jarvisEventsDir: string
+  vipSenders: string[]
   theme: string
 }
 
@@ -121,5 +130,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   digestEnabled: true,
   jarvisBridgeEnabled: false, // family default: off (Lee enables on his own machine which has Jarvis)
   jarvisEventsDir: '',
+  vipSenders: [],
   theme: 'linear-app'
 }

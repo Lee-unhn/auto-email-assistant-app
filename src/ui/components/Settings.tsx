@@ -123,6 +123,14 @@ export function Settings({ settings, onSave }: Props) {
           value={s.localScanRoots.join(', ')}
           onChange={(e) => patch({ localScanRoots: e.target.value.split(',').map((x) => x.trim()).filter(Boolean) })}
         />
+        <div className="meta" style={{ marginTop: 10 }}>重要寄件人 VIP（逗號分隔；這些人的信一定提醒、標高優先）</div>
+        <input
+          className="field"
+          style={{ marginTop: 6 }}
+          placeholder="boss@company.com, mom@gmail.com"
+          value={s.vipSenders.join(', ')}
+          onChange={(e) => patch({ vipSenders: e.target.value.split(',').map((x) => x.trim()).filter(Boolean) })}
+        />
       </div>
 
       <div className="card">

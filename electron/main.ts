@@ -57,7 +57,8 @@ function registerIpc(): void {
       geminiModel: next.geminiModel,
       jarvisBridgeEnabled: next.jarvisBridgeEnabled,
       digestEnabled: next.digestEnabled,
-      localScanRoots: next.localScanRoots
+      localScanRoots: next.localScanRoots,
+      vipSenders: next.vipSenders
     })
     applySchedule(next, () => win && runTriage(win, next))
     return settingsWithKeys()

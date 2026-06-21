@@ -16,6 +16,7 @@ export interface LocalConfig {
   jarvisBridgeEnabled?: boolean
   digestEnabled?: boolean
   localScanRoots?: string[]
+  vipSenders?: string[] // important senders → always surfaced + high urgency
 }
 
 const FILE = path.join(os.homedir(), '.auto-email-assistant-config.json')

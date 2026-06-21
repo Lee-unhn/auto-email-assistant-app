@@ -3,6 +3,7 @@ import type { TriageRun } from '../types'
 // Pure: build a self-notification digest from a triage run.
 export function buildDigestText(run: TriageRun): { subject: string; text: string } {
   const conflicts = run.outcomes.filter((o) => o.conflictNote)
+  const high = run.outcomes.filter((o) => o.classification?.urgency === 'high')
   const flags = run.outcomes.filter((o) => o.flagNote)
   const events = run.outcomes.flatMap((o) => o.events ?? [])
   const drafts = run.outcomes.filter((o) => o.draft)
@@ -12,6 +13,11 @@ export function buildDigestText(run: TriageRun): { subject: string; text: string
   if (conflicts.length) {
     L.push('⚠⚠ 行事曆時段衝突（請優先處理，避免會議重疊耽誤工作）：')
     for (const c of conflicts) L.push(`  • ${c.conflictNote}`)
+    L.push('')
+  }
+  if (high.length) {
+    L.push('🔴 高優先（需盡快看）：')
+    for (const h of high) L.push(`  • ${h.subject}（${h.from}）`)
     L.push('')
   }
   if (flags.length) {
@@ -33,7 +39,7 @@ export function buildDigestText(run: TriageRun): { subject: string; text: string
   L.push('')
   L.push('（本信由 auto-email-assistant 自動寄給你本人作為摘要通知；回覆此信不會被處理。）')
   return {
-    subject: `📧 郵件助理摘要 ${run.startedAt.slice(0, 10)} · ${conflicts.length ? `⚠衝突${conflicts.length} · ` : ''}事件${events.length}/旗標${flags.length}/草稿${drafts.length}`,
+    subject: `📧 郵件助理摘要 ${run.startedAt.slice(0, 10)} · ${conflicts.length ? `⚠衝突${conflicts.length} · ` : ''}${high.length ? `🔴高優先${high.length} · ` : ''}事件${events.length}/旗標${flags.length}/草稿${drafts.length}`,
     text: L.join('\n')
   }
 }

@@ -73,7 +73,7 @@ node --experimental-strip-types smoke.ts   # 核心邏輯測試（免金鑰）
 - GUI app 也已接：`mailSource` 預設 `gmail`，`runTriage`/`listThreads` 走 `getMailProvider` + keyloader fallback，免在 Settings 貼金鑰即可跑。
 - **Claude 模式（無 API key）✅**：`src/llm/claudeCli.ts` 用 Claude Code 訂閱 `claude -p`（prompt 走 stdin，仿 jarvis brain.py），無需 Anthropic API key、零額外成本。provider='claude' 時若無 key 自動走 CLI。**實測（2026-06-21）真實收件匣 6/6 高信心無 fallback**（比 Gemini 免費更穩；PSMF 週報正確判為 SELF_AUTOMATED）；摘要 email + Jarvis 2 事件全跑通。`npx tsx realrun.ts claude` 可重測。
 - **任務佇列 Sheet-as-DB（2026-06-21）**：解耦 讀信(無 LLM 零失敗)→DB 佇列(pending)→處理(可重試)。失敗留 pending 重試,不消失。解任務遺失/間歇429,但不放大 Gemini 日 RPD。`src/queue/taskStore.ts`(Local JSON / Google Sheet 雙後端)、`queue.ts`(ingest/process/run/--watch/--sheet)、`google-sheet-task-db.gs`(Apps Script 後端)、`QUEUE.md`。
-- **任務執行 + 即時/間隔讀取（2026-06-21）**：`ACTION_MATERIAL` 已改為產出實際交付物（草稿正文）。實證 Lee 自寄任務信「三家公司分析+求職建議」→ 產出完整分析草稿（本地、未寄、墨鉅查無資料誠實標待確認）。讀取：`watch.ts`（`--interval`/`--provider claude`/`--once`/`--dry`，idempotent）；`executetask.ts` 詳細執行器。**執行邊界**：只自動做安全可逆動作，寄信/金流/刪除/設定一律只準備+待確認。Claude CLI 無 web grounding，強網路查證走 Gemini 模式。
+- **任務執行 + 即時/間隔讀取（2026-06-21）**：`ACTION_MATERIAL` 已改為產出實際交付物（草稿正文）。實證 Lee 自寄任務信「三家公司分析+求職建議」→ 產出完整分析草稿（本地、未寄、其中一家查無資料時誠實標待確認）。讀取：`watch.ts`（`--interval`/`--provider claude`/`--once`/`--dry`，idempotent）；`executetask.ts` 詳細執行器。**執行邊界**：只自動做安全可逆動作，寄信/金流/刪除/設定一律只準備+待確認。Claude CLI 無 web grounding，強網路查證走 Gemini 模式。
 
 ## 8. v2 Roadmap（Chief of Staff 裁決排序，2026-06-20）
 > CoS 裁決：**否決**「挖 GitHub repos + 自動 loop 完成所有功能」的開放式迴圈（VDrama over-engineering 教訓，且先前一封真信都沒處理過）。先把真實資料跑穩，再加東西。
