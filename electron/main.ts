@@ -74,8 +74,10 @@ function createWindow(): void {
   }
 
   // Close → hide to tray (keep running so scheduled auto-triage still fires).
+  // Only when a tray actually exists — otherwise let close quit normally so the
+  // user is never trapped with a hidden window and no way back.
   win.on('close', (e) => {
-    if (isQuitting) return
+    if (isQuitting || !tray) return
     e.preventDefault()
     win?.hide()
     if (!notifiedHide && Notification.isSupported()) {
@@ -179,8 +181,9 @@ app.on('before-quit', () => { isQuitting = true })
 
 app.on('window-all-closed', () => {
   // With close-to-tray the window is hidden, not destroyed, so this normally won't
-  // fire from the user; only quit if we're genuinely quitting.
-  if (process.platform !== 'darwin' && isQuitting) app.quit()
+  // fire from the user. Quit when genuinely quitting OR when there's no tray to
+  // restore from (otherwise a closed window with no tray would leave a zombie).
+  if (process.platform !== 'darwin' && (isQuitting || !tray)) app.quit()
 })
 
 app.on('quit', () => { tray?.destroy() })

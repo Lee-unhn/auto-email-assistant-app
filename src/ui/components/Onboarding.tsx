@@ -20,7 +20,6 @@ export function Onboarding({ onSave, onRun }: Props) {
   const [step, setStep] = useState<Step>('welcome')
   const [claude, setClaude] = useState<'checking' | 'yes' | 'no'>('checking')
   const [gemKey, setGemKey] = useState('')
-  const [gemTest, setGemTest] = useState('')
   const [busy, setBusy] = useState(false)
   const [addr, setAddr] = useState('')
   const [pass, setPass] = useState('')
@@ -37,13 +36,14 @@ export function Onboarding({ onSave, onRun }: Props) {
 
   const saveGemini = async () => {
     if (!gemKey) return
-    setBusy(true); setGemTest('測試中…')
+    setBusy(true)
     try {
+      // Save the key and continue regardless — a transient test failure must never trap
+      // the user. The connection is validated on the first real run (friendly error guides).
       await window.api.setKey('gemini', gemKey)
       await window.api.saveSecrets({ geminiKey: gemKey })
-      const r = await window.api.testProvider('gemini')
-      setGemTest((r.ok ? '✓ ' : '✗ ') + r.detail)
-      if (r.ok) { setGemKey(''); setStep('gmail') }
+      setGemKey('')
+      setStep('gmail')
     } finally { setBusy(false) }
   }
   const saveGmail = async () => {
@@ -112,13 +112,12 @@ export function Onboarding({ onSave, onRun }: Props) {
               <li>把那串文字（開頭 <code>AIza…</code>）複製貼到下面。</li>
             </ol>
             <button className="btn sm" onClick={() => window.api.openExternal('https://aistudio.google.com/apikey')}><Icon name="search" size={14} /> 開啟 Google AI Studio</button>
-            <div className="row" style={{ marginTop: 10 }}>
-              <input className="field" type="password" placeholder="AIza…" value={gemKey} onChange={(e) => setGemKey(e.target.value)} />
-              <button className="btn primary" disabled={busy || !gemKey} onClick={saveGemini}>儲存並測試</button>
+            <input className="field" style={{ marginTop: 10 }} type="password" placeholder="AIza…" value={gemKey} onChange={(e) => setGemKey(e.target.value)} />
+            <div className="meta" style={{ marginTop: 8 }}>金鑰會加密存在你自己的電腦，不會上傳。可在「設定」再測試連線。</div>
+            <div className="onb-actions">
+              <button className="btn primary" disabled={busy || !gemKey} onClick={saveGemini}>儲存並繼續</button>
+              <button className="btn" onClick={() => setStep('gmail')}>稍後再設定</button>
             </div>
-            {gemTest && <div className="meta" style={{ marginTop: 6 }}>{gemTest}</div>}
-            <div className="meta" style={{ marginTop: 8 }}>金鑰會加密存在你自己的電腦,不會上傳。</div>
-            <div className="onb-actions"><button className="btn" onClick={() => setStep('gmail')}>先跳過</button></div>
           </div>
         )}
 
