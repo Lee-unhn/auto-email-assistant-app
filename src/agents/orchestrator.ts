@@ -1,4 +1,4 @@
-import type { AgentEvent, EmailThread, ThreadOutcome } from '../types'
+import type { AgentEvent, Classification, EmailThread, ThreadOutcome } from '../types'
 import { FLAGS } from '../rules/taxonomy'
 import { AgentCtx } from './types'
 import { classify } from './classifier'
@@ -12,7 +12,7 @@ import { verify } from './verifier'
 //   - flags                → Classifier only, mark notify-only (never act)
 //   - ACTION_EVENT         → + EventExtractor
 //   - ACTION_REPLY/MATERIAL→ fan out: Researcher (+EventExtractor if dated) → ReplyDrafter → Verifier → synthesize
-export async function orchestrate(thread: EmailThread, ctx: AgentCtx): Promise<ThreadOutcome> {
+export async function orchestrate(thread: EmailThread, ctx: AgentCtx, pre?: Classification): Promise<ThreadOutcome> {
   const trail: AgentEvent[] = []
   // Record into the per-thread trail AND forward to the live UI sink (ctx.emit).
   const localCtx: AgentCtx = {
@@ -26,7 +26,10 @@ export async function orchestrate(thread: EmailThread, ctx: AgentCtx): Promise<T
 
   const subject = thread.messages[0]?.subject ?? '(no subject)'
   const from = thread.messages[0]?.from ?? ''
-  const classification = await classify(thread, localCtx)
+  // Use a precomputed classification when provided (zero-LLM pre-filter or batch classify);
+  // otherwise classify this email on its own (the proven per-email fallback path).
+  const classification = pre ?? await classify(thread, localCtx)
+  if (pre) localCtx.emit({ agent: 'Classifier', status: 'done', message: `${pre.category}（${pre.confidence >= 0.8 && pre.reason.length < 12 ? '規則' : '批次'}）` })
   const outcome: ThreadOutcome = { threadId: thread.id, subject, from, classification, agentTrail: trail }
 
   const cat = classification.category

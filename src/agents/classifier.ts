@@ -1,7 +1,7 @@
 import type { Classification, EmailThread } from '../types'
 import { extractJson } from '../llm'
 import { HARD_RULES } from '../rules/hardRules'
-import { TAXONOMY_PROMPT, ACTIONABLE } from '../rules/taxonomy'
+import { TAXONOMY_PROMPT, ACTIONABLE, CATEGORY_MAP } from '../rules/taxonomy'
 import { AgentCtx, threadText } from './types'
 
 export async function classify(thread: EmailThread, ctx: AgentCtx): Promise<Classification> {
@@ -23,4 +23,35 @@ export async function classify(thread: EmailThread, ctx: AgentCtx): Promise<Clas
     ctx.emit({ agent: 'Classifier', status: 'error', message: e?.message ?? 'classify failed' })
     return { category: 'INFO_SYS', confidence: 0, reason: 'fallback (分類失敗)', needsCollaboration: false }
   }
+}
+
+// Classify MANY emails in ONE LLM call (array in → JSON array out), to collapse the
+// per-email classify calls that dominate wall-time on a 10-RPM free tier. Returns one
+// Classification per input thread, aligned by index. THROWS on any shape/validity
+// mismatch so the caller can fall back to per-email classify (never silently degrade).
+export async function batchClassify(threads: EmailThread[], ctx: AgentCtx): Promise<Classification[]> {
+  const system = `你是郵件分流分類器。${HARD_RULES}\n\n分類類別：\n${TAXONOMY_PROMPT}`
+  const items = threads.map((t, i) => {
+    const m = t.messages[0]
+    return { i, from: m?.from ?? '', subject: m?.subject ?? '', body: (m?.body ?? '').slice(0, 800) }
+  })
+  const user = `把下列每封郵件各歸到唯一最適類別，逐封獨立判斷（每封只看自己的內容）。判斷 needsCollaboration 與 urgency（規則同單封）。\n只回 JSON 陣列，長度與順序必須與輸入完全一致：\n[{"i":0,"category":"<ID>","confidence":0..1,"reason":"一句中文","needsCollaboration":true|false,"urgency":"high|normal|low"}, ...]\n\n郵件們（JSON）：\n${JSON.stringify(items)}`
+
+  const r = await ctx.llm.complete({ system, user, json: true, maxTokens: Math.min(8000, 120 * threads.length) })
+  const arr = extractJson<any[]>(r.text)
+  if (!Array.isArray(arr) || arr.length !== threads.length) throw new Error('batch shape mismatch')
+
+  return threads.map((_, i) => {
+    const item = arr.find((a) => a?.i === i) ?? arr[i]
+    if (!item || !item.category || !(item.category in CATEGORY_MAP)) throw new Error(`batch item ${i} invalid`)
+    const c: Classification = {
+      category: item.category,
+      confidence: typeof item.confidence === 'number' ? item.confidence : 0.5,
+      reason: item.reason ?? '',
+      needsCollaboration: !!item.needsCollaboration,
+      urgency: item.urgency ?? 'normal'
+    }
+    if (ACTIONABLE.includes(c.category) && c.category !== 'ACTION_EVENT') c.needsCollaboration = true
+    return c
+  })
 }

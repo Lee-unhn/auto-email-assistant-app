@@ -1,11 +1,14 @@
 import path from 'path'
 import { app, BrowserWindow } from 'electron'
-import type { AgentEvent, AppSettings, ThreadOutcome, TriageRun } from '../src/types'
+import type { AgentEvent, AppSettings, Classification, EmailThread, ThreadOutcome, TriageRun } from '../src/types'
 import { createProvider } from '../src/llm'
 import { SampleMailProvider } from '../src/mail/sample'
 import { ImapMailProvider } from '../src/mail/imap'
 import type { MailProvider } from '../src/mail/MailProvider'
+import type { AgentCtx } from '../src/agents/types'
 import { orchestrate } from '../src/agents/orchestrator'
+import { classify, batchClassify } from '../src/agents/classifier'
+import { preFilter, PREFILTER_SKIP } from '../src/rules/preFilter'
 import { addAppCalendarEvent } from '../src/calendar/appCalendar'
 import { postCalendarEvent } from '../src/calendar/appsScript'
 import { readConfig } from '../src/config/localConfig'
@@ -75,6 +78,34 @@ export async function runTriage(win: BrowserWindow | null, settings: AppSettings
     win?.webContents.send(IPC.agentEvent, { ...e, ts: Date.now(), threadId })
 
   const today = new Date().toISOString().slice(0, 10)
+
+  // ── Speed: zero-LLM pre-filter + batch classify, to collapse the per-email
+  // classify calls that dominate wall-time on a 10-RPM free tier. ──
+  const selfAddress = (await readGmailCreds())?.user
+  const classMap = new Map<string, Classification>()
+  const toClassify: EmailThread[] = []
+  for (const t of fresh) {
+    const pre = preFilter(t.messages[0], { selfAddress, vipSenders: cfg.vipSenders })
+    if (pre && pre.confidence >= PREFILTER_SKIP) classMap.set(t.id, pre)
+    else toClassify.push(t)
+  }
+  if (toClassify.length) {
+    win?.webContents.send(IPC.triageProgress, { done: 0, total: fresh.length, subject: '快速分類中…' })
+    const baseCtx: AgentCtx = { llm, settings, today, localScan, emit: () => {} }
+    for (let i = 0; i < toClassify.length; i += 10) {
+      const chunk = toClassify.slice(i, i + 10)
+      try {
+        const results = await batchClassify(chunk, baseCtx)
+        chunk.forEach((t, j) => classMap.set(t.id, results[j]))
+      } catch {
+        // batch failed → per-email fallback (proven path); never silently drop
+        for (const t of chunk) {
+          try { classMap.set(t.id, await classify(t, baseCtx)) } catch { /* unset → orchestrate classifies it */ }
+        }
+      }
+    }
+  }
+
   let done = 0
   for (const thread of fresh) {
     win?.webContents.send(IPC.triageProgress, {
@@ -91,7 +122,7 @@ export async function runTriage(win: BrowserWindow | null, settings: AppSettings
     }
     let outcome: ThreadOutcome
     try {
-      outcome = await orchestrate(thread, ctx)
+      outcome = await orchestrate(thread, ctx, classMap.get(thread.id))
     } catch (e: any) {
       outcome = {
         threadId: thread.id,
