@@ -29,6 +29,7 @@ function createWindow(): void {
     backgroundColor: '#08090a',
     autoHideMenuBar: true,
     title: 'Auto Email Assistant',
+    icon: path.join(app.getAppPath(), 'build', 'icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, '../preload/preload.js'),
       sandbox: false,
@@ -121,6 +122,7 @@ function registerIpc(): void {
 }
 
 app.whenReady().then(async () => {
+  app.setAppUserModelId('io.leeunhn.autoemailassistant') // Windows: required for notifications/Action Center
   registerIpc()
   createWindow()
   const s = await loadSettings()

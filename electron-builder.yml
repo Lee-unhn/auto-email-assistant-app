@@ -14,7 +14,10 @@ extraResources:
   - from: src/design/linear-app
     to: design/linear-app
 win:
+  icon: build/icon.ico
   target:
+    - target: zip
+      arch: [x64]
     - target: nsis
       arch: [x64]
     - target: portable

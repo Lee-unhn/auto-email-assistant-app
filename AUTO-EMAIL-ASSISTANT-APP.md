@@ -28,6 +28,11 @@
 - DON'T：`zip`/`portable` **不支援自動更新**；自動更新需 `nsis` + 簽章（已延後）。
 - 重要：改 `appId` 會改 app 身分與 userData 路徑、且更新會視為不同 app——**首次散布前改好**（已改 `io.leeunhn.autoemailassistant`）。
 
+**目前建置配方（2026-06-21，未開 Developer Mode）**
+- winCodeSign 解 macOS symlink 在無 Dev Mode/admin 下會錯,**但 `electron-builder --win dir`(只 staging 不簽章)仍會成功產出 `dist/win-unpacked/`**(symlink 錯誤對 dir 非致命)。`zip`/`nsis`/`portable` 需簽章步驟 → 會被擋。
+- **交付 zip 配方**:`npm run build` → `npx electron-builder --win dir` → `Compress-Archive dist/win-unpacked/* → dist/AutoEmailAssistant-win-x64.zip`(~112MB)。解壓後雙擊 `Auto Email Assistant.exe` 即可。`build/icon.ico` 已套用為 exe/視窗圖示。
+- 要 electron-builder 直接出 zip/nsis/portable:需 Lee 一次「開 Developer Mode」或「提權 build」(系統設定,Claude 不自行改)。config 已就緒。
+
 **Electron Notification（主行程）**
 - DO：主行程建 `new Notification({title, body, silent})` 後**必須 `.show()`**；先測 `Notification.isSupported()`。
 - DO：Windows 要 `app.setAppUserModelId(appId)` 否則不進 Action Center。
