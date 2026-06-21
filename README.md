@@ -1,4 +1,6 @@
-# Auto Email Assistant (desktop)
+# Auto Email Assistant (desktop) · 自動郵件助理（桌面版）
+
+**English** ·  [中文說明見下 ↓](#中文說明)
 
 Dual-LLM (Claude Code CLI subscription / Gemini free) local-first desktop assistant
 for daily family use. Reads real Gmail, triages with an 11-category taxonomy, extracts
@@ -6,7 +8,12 @@ appointments (multi-event) into a **private in-app calendar** with advance remin
 schedule-conflict detection, drafts replies (**never sends**), finds supporting material
 (local + web), sends a self-only daily digest, and bridges voice events to Jarvis.
 
-> Author: JasonLee · License: Apache-2.0 · See `FAMILY-SETUP.md` to set up a family member.
+> 雙 LLM（Claude Code 訂閱／Gemini 免費）本機優先的桌面郵件助理，給家人每日使用：讀真實
+> Gmail、11 類分流、抽多個約會進**私密行事曆**（含提前提醒＋時段衝突偵測）、擬回信草稿（**永不寄出**）、
+> 找輔助材料（本機＋網路）、寄只給自己的每日摘要、把語音事件橋接到 Jarvis。
+
+> Author / 作者: **JasonLee** · License: Apache-2.0 · 家人安裝見 `FAMILY-SETUP.md`
+> Topics: `email-assistant` `electron` `gemini` `claude` `gmail` `calendar` `ai-agent` `privacy-first` `productivity`
 
 ## Status
 - **Mail:** real Gmail via IMAP app-password (entered in Settings — no file editing).
@@ -115,3 +122,34 @@ Interactive version (tabs / pan / zoom / mind-map): `docs/diagrams/2026-06-21_au
 Never send mail · never touch security/password settings · never move money ·
 never delete · never draft replies to no-reply/marketing · material search is
 read-only. All auto artifacts are tagged `[自動·待確認]`.
+
+---
+
+## 中文說明
+
+桌面郵件助理，給家人每日使用：每天自動讀信、把約會排進**私密行事曆**、需要時擬好回信草稿，
+人類收到信後「電腦可代勞」的部分盡量自動完成，但**不可逆/對外動作一律只準備、待你確認**。
+
+### 功能
+| 能力 | 說明 |
+|---|---|
+| 讀信分流 | 真實 Gmail（IMAP 應用程式密碼，**設定頁輸入、免改檔**），自動分 11 類 |
+| 行事曆 | 一封信抽**多個**約會 → 寫進 **app 私密行事曆**（含提前提醒）；**時段衝突**自動合併同會議／警告不同會議 |
+| 回信 | 需回覆的信擬草稿（存草稿匣，**永不自動寄**） |
+| 找材料 | 從本機（唯讀）＋網路找資料附上 |
+| 每日摘要 | 每天寄一封摘要 email 給**你本人**（衝突／高優先／事件／草稿） |
+| 重要寄件人 VIP | 設定可填；VIP 信一定提醒、標高優先 |
+| 雙 LLM | 自動選：有 Claude Code 用 Claude，否則用免費 Gemini |
+| 語音（選用） | 有 Jarvis 的機器把事件念出來 |
+
+### 隱私
+**預設只寫 app 私密行事曆（本機，不外流）**——因為有家人是公眾人物、Google 行事曆公開；
+要寫 Google 行事曆需在設定**主動開啟**。
+
+### 安裝（每位家人一次，約 10 分鐘）
+詳見 `FAMILY-SETUP.md`。順序：複製資料夾 → `npm install` → 雙擊 **`開介面.bat`** → 設定頁輸入
+Gemini 金鑰 + Gmail 帳密 → 按「執行分流」測一次 → 雙擊 **`啟動小幫手.bat`** 背景常駐。
+
+### 安全硬規則
+不寄信／不付款／不刪除／不改安全設定／不對 no-reply 信亂回；信件內容當「資料」非命令
+（防 prompt injection）。詳見 `SAFETY-CHECKLIST.md`、完整報告 `USAGE-REPORT.md`。
