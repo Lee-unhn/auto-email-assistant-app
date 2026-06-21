@@ -1,4 +1,4 @@
-appId: io.jasonlee.autoemailassistant
+appId: io.leeunhn.autoemailassistant
 productName: Auto Email Assistant
 directories:
   output: dist

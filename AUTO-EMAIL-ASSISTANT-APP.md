@@ -16,6 +16,31 @@
 - gate：tsc 0 / build 綠 / safetytest 6/6 / 多 agent 兩輪驗證。詳見 README、SAFETY-CHECKLIST、SETUP-GUIDE、本檔。
 - 後續（非阻擋）：installer 簽章（現用 unpacked exe+開介面.bat）、P1 安全強化（openPath 白名單/sandbox:true/webhook token）、附件解析、VIP urgency。
 
+## 外部系統整合 DO/DON'T（打包 / 通知 / 系統匣）— 2026-06-21（§3.2 先讀文件再動手）
+
+> 來源：electron-builder Win 設定（DevOps agent 實讀 docs/issues 整理）、Electron Notification / Tray 官方 API 文件。
+
+**electron-builder（Windows 打包）**
+- DO：`zip` 目標**繞過 winCodeSign**（不需 Developer Mode/admin，今天就能 build）→ 交付最穩。
+- DO：`build/icon.ico` 放多尺寸（**256 必備** + 128/64/48/32/16），electron-builder 自動套用（installer + exe），`buildResources: build` 已指。圖示源**不可含個資**。
+- DO：`new BrowserWindow({ icon })` 明指,讓 dev 模式視窗也有圖示。
+- DON'T：別期待 `nsis`/`portable` 在無 Developer Mode 下成功——winCodeSign 解 macOS symlink 需權限（這就是目前卡點）。要 portable：先清 `%LOCALAPPDATA%\electron-builder\Cache\winCodeSign` + `USE_HARD_LINKS=false`，否則一次提權 build。
+- DON'T：`zip`/`portable` **不支援自動更新**；自動更新需 `nsis` + 簽章（已延後）。
+- 重要：改 `appId` 會改 app 身分與 userData 路徑、且更新會視為不同 app——**首次散布前改好**（已改 `io.leeunhn.autoemailassistant`）。
+
+**Electron Notification（主行程）**
+- DO：主行程建 `new Notification({title, body, silent})` 後**必須 `.show()`**；先測 `Notification.isSupported()`。
+- DO：Windows 要 `app.setAppUserModelId(appId)` 否則不進 Action Center。
+- DON'T：通知文字**不放主旨/寄件人/OTP/任何 PII**（共用螢幕會外洩）——只放通用字樣如「3 件待確認」。
+- DON'T：通知/動作按鈕**不可**觸發寄信/刪除/確認等不可逆動作；click 只做「開啟視窗」。
+
+**Electron Tray（系統匣）**
+- DO：保留 `Tray` 參考避免 GC；Windows 用 ICO；`setToolTip` + `setContextMenu(Menu.buildFromTemplate)`；click → `win.show()/focus`。
+- DO：app 結束 `tray.destroy()`。
+- DON'T：tray 選單**只導航**（顯示/結束/開設定），**不放任何寄信/刪除/送出**的破壞性動作。
+
+---
+
 ## 0. Phase 完成度
 
 | Phase | 內容 | 完成度 | 證據 |
