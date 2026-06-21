@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import type { AgentEvent, EmailThread, ThreadOutcome, TriageRun } from '../../types'
+import { bucketOf, BUCKET_LABEL, type Bucket } from '../../rules/taxonomy'
 import { CategoryBadge } from './CategoryBadge'
 import { AgentPanel } from './AgentPanel'
+import { Icon } from './Icon'
 
 interface Props {
   threads: EmailThread[]
@@ -9,146 +11,203 @@ interface Props {
   liveTrails: Record<string, AgentEvent[]>
 }
 
+const ORDER: Bucket[] = ['act', 'watch', 'skip']
+
 export function InboxView({ threads, run, liveTrails }: Props) {
   const [sel, setSel] = useState<string | null>(threads[0]?.id ?? null)
+  const [filter, setFilter] = useState<Bucket | null>(null)
+  const [copied, setCopied] = useState(false)
   const outcomeOf = (id: string): ThreadOutcome | undefined => run?.outcomes.find((o) => o.threadId === id)
   const thread = threads.find((t) => t.id === sel) ?? null
   const outcome = sel ? outcomeOf(sel) : undefined
   const trail = (sel && liveTrails[sel]?.length ? liveTrails[sel] : outcome?.agentTrail) ?? []
 
+  // group threads into the 3 priority buckets (unprocessed → act, so they stay visible)
+  const groups: Record<Bucket, EmailThread[]> = { act: [], watch: [], skip: [] }
+  for (const t of threads) {
+    const o = outcomeOf(t.id)
+    const b = o ? bucketOf(o.classification.category, o.classification.urgency) : 'act'
+    groups[b].push(t)
+  }
+  const replyCount = run?.outcomes.filter((o) => o.classification.category === 'ACTION_REPLY').length ?? 0
+  const eventCount = run?.outcomes.reduce((n, o) => n + (o.events?.length ?? 0), 0) ?? 0
+  const watchCount = groups.watch.length
+  const actNeeds = replyCount + eventCount + watchCount
+
   return (
-    <div className="thread-grid">
-      <div className="thread-list">
-        {threads.map((t) => {
-          const o = outcomeOf(t.id)
-          const m = t.messages[0]
-          return (
-            <div key={t.id} className={`thread-item ${sel === t.id ? 'sel' : ''}`} onClick={() => setSel(t.id)}>
-              <div className="subj">{m?.subject}</div>
-              <div className="from">{m?.from}</div>
-              {o && (
-                <div style={{ marginTop: 7 }}>
-                  <CategoryBadge category={o.classification.category} />
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-
-      <div className="detail">
-        {!thread ? (
-          <div className="empty-state">
-            <div className="ico">📭</div>
-            <div>選一封郵件查看</div>
-            <div className="hint">點左側任一封信，這裡會顯示它是什麼、要不要回、有沒有行程。</div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14, height: '100%' }}>
+      {run && (
+        <div className="today">
+          <div className="today-head">
+            <Icon name="sparkles" size={18} />
+            <span>今天整理了 {run.outcomes.length} 封信</span>
           </div>
-        ) : (
-          <>
-            <div className="card">
-              <div style={{ fontSize: 15, fontWeight: 590 }}>{thread.messages[0]?.subject}</div>
-              <div className="meta" style={{ marginTop: 4 }}>
-                {thread.messages[0]?.from} · {new Date(thread.messages[0]?.date ?? '').toLocaleString()}
-              </div>
-              <div style={{ marginTop: 12, color: 'var(--fg-2)', whiteSpace: 'pre-wrap', fontSize: 13 }}>
-                {thread.messages[0]?.body}
-              </div>
-              {thread.messages[0]?.attachments?.length ? (
-                <div className="meta" style={{ marginTop: 10 }}>
-                  📎 {thread.messages[0].attachments.length} 個附件：{thread.messages[0].attachments.map((a) => a.filename).join('、')}
-                </div>
-              ) : null}
+          {actNeeds === 0 ? (
+            <div className="today-stats"><span className="muted">今天沒有需要你處理的信，都已自動歸類好了。</span></div>
+          ) : (
+            <div className="today-stats">
+              <button className={`stat ${filter === 'act' ? 'on' : ''}`} onClick={() => setFilter(filter === 'act' ? null : 'act')}>
+                <Icon name="mail" size={15} /> {replyCount} 要回覆 · {eventCount} 個行程
+              </button>
+              <button className={`stat ${filter === 'watch' ? 'on' : ''}`} onClick={() => setFilter(filter === 'watch' ? null : 'watch')}>
+                <Icon name="alert" size={15} /> {watchCount} 要留意
+              </button>
+              <span className="muted" style={{ fontSize: 12 }}>其餘 {groups.skip.length} 封已歸到可略過</span>
             </div>
+          )}
+        </div>
+      )}
 
-            {outcome ? (
-              <>
-                <div className="section-title">這封信是什麼</div>
-                <div className="card">
-                  <span className="row" style={{ gap: 8 }}>
-                    <CategoryBadge category={outcome.classification.category} />
-                    {outcome.classification.urgency === 'high' && <span className="badge danger">🔴 高優先</span>}
-                  </span>
-                  <div style={{ marginTop: 8, color: 'var(--fg-2)' }}>{outcome.classification.reason}</div>
-                  {outcome.flagNote && (
-                    <div style={{ marginTop: 10, color: 'var(--warn)' }}>⚠ {outcome.flagNote}</div>
-                  )}
-                  {outcome.conflictNote && (
-                    <div style={{ marginTop: 10, color: 'var(--danger)', fontWeight: 590 }}>⚠ 時段衝突：{outcome.conflictNote}</div>
-                  )}
+      <div className="thread-grid">
+        <div className="thread-list">
+          {!run ? (
+            threads.map((t) => <ThreadRow key={t.id} t={t} sel={sel} onSel={setSel} outcome={outcomeOf(t.id)} />)
+          ) : (
+            ORDER.filter((b) => !filter || b === filter).map((b) => {
+              const items = groups[b]
+              if (!items.length) return null
+              const collapsed = b === 'skip' && !filter
+              const body = items.map((t) => <ThreadRow key={t.id} t={t} sel={sel} onSel={setSel} outcome={outcomeOf(t.id)} />)
+              return (
+                <div key={b}>
+                  <div className="thread-group-label">{BUCKET_LABEL[b]}（{items.length}）</div>
+                  {collapsed ? (
+                    <details><summary className="group-toggle">已自動分類，點開查看</summary>{body}</details>
+                  ) : body}
                 </div>
+              )
+            })
+          )}
+        </div>
 
-                {outcome.events && outcome.events.length > 0 && (
-                  <>
-                    <div className="section-title">行事曆（已加 {outcome.events.length} 筆到你的私人行事曆）</div>
-                    {outcome.events.map((ev, i) => (
-                      <div className="card" key={i} style={{ marginBottom: 8 }}>
-                        <div style={{ fontWeight: 590, display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span>{ev.summary.replace(/^\[自動[^\]]*\]\s*/, '')}</span>
-                          <span className="badge warn">待你確認</span>
-                        </div>
-                        <div className="meta" style={{ marginTop: 4 }}>
-                          {ev.startISO.slice(0, 16).replace('T', ' ')} → {ev.endISO.slice(11, 16)} · 提前提醒{' '}
-                          {ev.reminders.map((m) => (m >= 60 ? `${m / 60} 小時前` : `${m} 分鐘前`)).join('、')}
-                        </div>
-                      </div>
-                    ))}
-                  </>
-                )}
+        <div className="detail">
+          {!thread ? (
+            <div className="empty-state">
+              <Icon name="inbox" size={26} />
+              <div>選一封郵件查看</div>
+              <div className="hint">點左側任一封信，這裡會顯示它是什麼、要不要回、有沒有行程。</div>
+            </div>
+          ) : (
+            <>
+              {outcome ? (
+                <>
+                  <div className="section-title" style={{ marginTop: 0 }}>這封信是什麼</div>
+                  <div className="card">
+                    <span className="row" style={{ gap: 8 }}>
+                      <CategoryBadge category={outcome.classification.category} />
+                      {outcome.classification.urgency === 'high' && <span className="badge danger"><Icon name="alert" size={13} /> 高優先</span>}
+                    </span>
+                    <div style={{ marginTop: 8, color: 'var(--fg-2)' }}>{outcome.classification.reason}</div>
+                    {outcome.flagNote && <div style={{ marginTop: 10, color: 'var(--warn-text)' }}><Icon name="alert" size={13} /> {outcome.flagNote}</div>}
+                    {outcome.conflictNote && <div style={{ marginTop: 10, color: 'var(--danger-text)', fontWeight: 590 }}><Icon name="alert" size={13} /> 時段衝突：{outcome.conflictNote}</div>}
+                  </div>
 
-                {outcome.draft && (
-                  <>
-                    <div className="section-title">回覆草稿（要你按下寄出才會送）</div>
-                    <div className="card">
-                      <div className="meta">主旨：{outcome.draft.subject} · 收件：{outcome.draft.to.join(', ')}</div>
-                      <textarea className="draft" defaultValue={outcome.draft.body} style={{ marginTop: 8 }} />
-                      {outcome.draftPath && (
-                        <div className="row" style={{ marginTop: 8 }}>
-                          <button className="btn sm" onClick={() => window.api.revealPath(outcome.draftPath!)}>
-                            打開草稿檔
-                          </button>
-                          <span className="meta">由你本人確認後再寄。</span>
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-
-                {outcome.materials && outcome.materials.length > 0 && (
-                  <>
-                    <div className="section-title">相關資料（電腦裡＋網路上）</div>
-                    <div className="card scrollbox">
-                      {outcome.materials.map((m, i) => (
-                        <div key={i} style={{ padding: '6px 0', borderBottom: '1px solid var(--border-soft)' }}>
-                          <div>
-                            <span className="chip" style={{ marginRight: 8 }}>{(({ local: '電腦', web: '網路', drive: '雲端' } as Record<string, string>)[m.source]) ?? m.source}</span>
-                            {m.ref?.startsWith('http') ? (
-                              <a className="link" href={m.ref} target="_blank" rel="noreferrer">{m.title}</a>
-                            ) : m.ref ? (
-                              <a className="link" onClick={() => window.api.revealPath(m.ref)}>{m.title}</a>
-                            ) : (
-                              <b>{m.title}</b>
-                            )}
+                  {outcome.events && outcome.events.length > 0 && (
+                    <>
+                      <div className="section-title">行事曆（已加 {outcome.events.length} 筆到你的私人行事曆）</div>
+                      {outcome.events.map((ev, i) => (
+                        <div className="card" key={i} style={{ marginBottom: 8 }}>
+                          <div style={{ fontWeight: 590, display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span>{ev.summary.replace(/^\[自動[^\]]*\]\s*/, '')}</span>
+                            <span className="badge warn">待你確認</span>
                           </div>
-                          {m.snippet && <div className="meta" style={{ marginTop: 2 }}>{m.snippet}</div>}
+                          <div className="meta" style={{ marginTop: 4 }}>
+                            {ev.startISO.slice(0, 16).replace('T', ' ')} → {ev.endISO.slice(11, 16)} · 提前提醒{' '}
+                            {ev.reminders.map((m) => (m >= 60 ? `${m / 60} 小時前` : `${m} 分鐘前`)).join('、')}
+                          </div>
                         </div>
                       ))}
-                    </div>
-                  </>
-                )}
-              </>
-            ) : (
-              <div className="empty-state" style={{ marginTop: 16 }}>
-                <div className="ico">⚡</div>
-                <div>還沒整理這封信</div>
-                <div className="hint">點上方「整理收件匣」，就會分析這封信並擬好需要的草稿。</div>
-              </div>
-            )}
+                      <div className="meta" style={{ marginTop: -2 }}>在「行事曆」分頁可以確認或移除這些行程。</div>
+                    </>
+                  )}
 
-            <div className="section-title">處理過程</div>
-            <AgentPanel events={trail} title="處理過程" />
-          </>
-        )}
+                  {outcome.draft && (
+                    <>
+                      <div className="section-title">回覆草稿（要你按下寄出才會送）</div>
+                      <div className="card">
+                        <div className="meta">主旨：{outcome.draft.subject} · 收件：{outcome.draft.to.join(', ')}</div>
+                        <textarea className="draft" defaultValue={outcome.draft.body} style={{ marginTop: 8 }} />
+                        <div className="row" style={{ marginTop: 8, flexWrap: 'wrap' }}>
+                          <button className="btn sm" onClick={() => { navigator.clipboard?.writeText(outcome.draft!.body); setCopied(true); setTimeout(() => setCopied(false), 1500) }}>
+                            <Icon name="copy" size={14} /> {copied ? '已複製' : '複製草稿'}
+                          </button>
+                          {outcome.draftPath && (
+                            <button className="btn sm" onClick={() => window.api.revealPath(outcome.draftPath!)}>
+                              <Icon name="file" size={14} /> 在電腦開啟草稿
+                            </button>
+                          )}
+                          <span className="meta"><Icon name="check" size={13} style={{ verticalAlign: '-2px' }} /> 已存到你的 Gmail 草稿匣，確認後按寄出即可。</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {outcome.materials && outcome.materials.length > 0 && (
+                    <>
+                      <div className="section-title">相關資料（電腦裡＋網路上）</div>
+                      <div className="card scrollbox">
+                        {outcome.materials.map((m, i) => (
+                          <div key={i} style={{ padding: '6px 0', borderBottom: '1px solid var(--border-soft)' }}>
+                            <div>
+                              <span className="chip" style={{ marginRight: 8 }}>{(({ local: '電腦', web: '網路', drive: '雲端' } as Record<string, string>)[m.source]) ?? m.source}</span>
+                              {m.ref?.startsWith('http') ? (
+                                <a className="link" href={m.ref} target="_blank" rel="noreferrer">{m.title}</a>
+                              ) : m.ref ? (
+                                <a className="link" onClick={() => window.api.revealPath(m.ref)}>{m.title}</a>
+                              ) : (
+                                <b>{m.title}</b>
+                              )}
+                            </div>
+                            {m.snippet && <div className="meta" style={{ marginTop: 2 }}>{m.snippet}</div>}
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </>
+              ) : (
+                <div className="empty-state" style={{ marginTop: 4 }}>
+                  <Icon name="sparkles" size={26} />
+                  <div>還沒整理這封信</div>
+                  <div className="hint">點上方「重新整理」，就會分析這封信並擬好需要的草稿。</div>
+                </div>
+              )}
+
+              <details className="folddetail">
+                <summary>看原文</summary>
+                <div className="card" style={{ marginTop: 8 }}>
+                  <div style={{ fontSize: 15, fontWeight: 590 }}>{thread.messages[0]?.subject}</div>
+                  <div className="meta" style={{ marginTop: 4 }}>{thread.messages[0]?.from} · {new Date(thread.messages[0]?.date ?? '').toLocaleString()}</div>
+                  <div className="mail-body">{thread.messages[0]?.body}</div>
+                  {thread.messages[0]?.attachments?.length ? (
+                    <div className="meta" style={{ marginTop: 10 }}><Icon name="paperclip" size={13} style={{ verticalAlign: '-2px' }} /> {thread.messages[0].attachments.length} 個附件：{thread.messages[0].attachments.map((a) => a.filename).join('、')}</div>
+                  ) : null}
+                </div>
+              </details>
+
+              <details className="folddetail">
+                <summary>小幫手怎麼處理的？</summary>
+                <div style={{ marginTop: 8 }}><AgentPanel events={trail} title="處理過程" /></div>
+              </details>
+            </>
+          )}
+        </div>
       </div>
+    </div>
+  )
+}
+
+function ThreadRow({ t, sel, onSel, outcome }: { t: EmailThread; sel: string | null; onSel: (id: string) => void; outcome?: ThreadOutcome }) {
+  const m = t.messages[0]
+  return (
+    <div className={`thread-item ${sel === t.id ? 'sel' : ''} ${outcome?.classification.urgency === 'high' ? 'vip' : ''}`} onClick={() => onSel(t.id)}>
+      <div className="subj">{m?.subject}</div>
+      <div className="from">{m?.from}</div>
+      {outcome && (
+        <div style={{ marginTop: 7 }}>
+          <CategoryBadge category={outcome.classification.category} />
+        </div>
+      )}
     </div>
   )
 }

@@ -10,6 +10,8 @@ export const IPC = {
   testProvider: 'llm:test',
   listThreads: 'mail:list',
   listCalendar: 'calendar:list',
+  confirmCalendar: 'calendar:confirm',
+  removeCalendar: 'calendar:remove',
   getConfig: 'config:get',
   saveConfig: 'config:save',
   saveSecrets: 'secrets:saveFiles',
@@ -29,6 +31,8 @@ export interface AppApi {
   testProvider(id: LLMProviderId): Promise<{ ok: boolean; detail: string }>
   listThreads(): Promise<EmailThread[]>
   listCalendar(): Promise<CalEvent[]>
+  confirmCalendar(id: string): Promise<void>
+  removeCalendar(id: string): Promise<void>
   getConfig(): Promise<LocalConfig>
   saveConfig(patch: Partial<LocalConfig>): Promise<LocalConfig>
   saveSecrets(s: { gmailAddress?: string; gmailAppPassword?: string; geminiKey?: string }): Promise<{ ok: boolean }>

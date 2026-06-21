@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import type { AgentEvent, AppSettings, EmailThread, TriageRun } from '../types'
-import { CATEGORY_MAP } from '../rules/taxonomy'
 import { InboxView } from './components/InboxView'
 import { CalendarView } from './components/CalendarView'
 import { Settings } from './components/Settings'
+import { Icon } from './components/Icon'
 
 function friendlyError(m: string): { msg: string; toSettings: boolean } {
   if (/(gmail|帳密|app[\s-]?password)/i.test(m) && /(未設定|找不到|no gmail)/i.test(m))
@@ -66,8 +66,6 @@ export function App() {
 
   if (!settings) return <div style={{ padding: 24 }} className="muted">載入中…</div>
 
-  const stats = run?.stats ?? {}
-
   return (
     <div className="app">
       <aside className="sidebar">
@@ -78,9 +76,9 @@ export function App() {
             <small>你的私人郵件小幫手</small>
           </div>
         </div>
-        <button className={`nav-btn ${view === 'inbox' ? 'active' : ''}`} aria-current={view === 'inbox' ? 'page' : undefined} onClick={() => setView('inbox')}><span aria-hidden="true">📥</span> 收件匣</button>
-        <button className={`nav-btn ${view === 'calendar' ? 'active' : ''}`} aria-current={view === 'calendar' ? 'page' : undefined} onClick={() => setView('calendar')}><span aria-hidden="true">📅</span> 行事曆</button>
-        <button className={`nav-btn ${view === 'settings' ? 'active' : ''}`} aria-current={view === 'settings' ? 'page' : undefined} onClick={() => setView('settings')}><span aria-hidden="true">⚙</span> 設定</button>
+        <button className={`nav-btn ${view === 'inbox' ? 'active' : ''}`} aria-current={view === 'inbox' ? 'page' : undefined} onClick={() => setView('inbox')}><Icon name="inbox" /> 收件匣</button>
+        <button className={`nav-btn ${view === 'calendar' ? 'active' : ''}`} aria-current={view === 'calendar' ? 'page' : undefined} onClick={() => setView('calendar')}><Icon name="calendar" /> 行事曆</button>
+        <button className={`nav-btn ${view === 'settings' ? 'active' : ''}`} aria-current={view === 'settings' ? 'page' : undefined} onClick={() => setView('settings')}><Icon name="settings" /> 設定</button>
 
         <div className="side-label">AI 模型</div>
         <div style={{ padding: '0 6px' }}>
@@ -107,15 +105,9 @@ export function App() {
           {view === 'inbox' && (
             <>
               <div className="spacer" style={{ flex: 1 }} />
-              {run && (
-                <div className="chips">
-                  {Object.entries(stats).map(([k, v]) => (
-                    <span className="chip" key={k}>{CATEGORY_MAP[k as keyof typeof CATEGORY_MAP]?.zh ?? k} <b>{v}</b></span>
-                  ))}
-                </div>
-              )}
-              <button className="btn primary" disabled={running} onClick={runTriage}>
-                {running ? '整理中…' : '▶ 整理收件匣'}
+              {run?.finishedAt && <span className="meta">最後整理：{new Date(run.finishedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
+              <button className={run ? 'btn' : 'btn primary'} disabled={running} onClick={runTriage}>
+                <Icon name="refresh" size={15} /> {running ? '整理中…' : run ? '重新整理' : '開始整理收件匣'}
               </button>
             </>
           )}

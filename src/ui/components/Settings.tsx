@@ -7,6 +7,18 @@ interface Props {
   onSave: (patch: Partial<AppSettings>) => Promise<void>
 }
 
+// cron "m h * * *" ↔ "HH:MM" so non-technical users pick a time, not write cron.
+function cronToTime(cron: string): string {
+  const p = (cron || '').trim().split(/\s+/)
+  const m = Number(p[0]), h = Number(p[1])
+  if (Number.isFinite(h) && Number.isFinite(m)) return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+  return '08:07'
+}
+function timeToCron(t: string): string {
+  const [h, m] = t.split(':').map(Number)
+  return `${m || 0} ${h || 0} * * *`
+}
+
 export function Settings({ settings, onSave }: Props) {
   const [gemKey, setGemKey] = useState('')
   const [antKey, setAntKey] = useState('')
@@ -78,25 +90,6 @@ export function Settings({ settings, onSave }: Props) {
       </div>
 
       <div className="card">
-        <div className="section-title" style={{ marginTop: 0 }}>進階：AI 模型</div>
-        <div className="grid2">
-          <div>
-            <label className="meta">Gemini 模型</label>
-            <input className="field" style={{ marginTop: 6 }} value={s.geminiModel} onChange={(e) => patch({ geminiModel: e.target.value })} />
-          </div>
-          <div>
-            <label className="meta">Claude 模型</label>
-            <input className="field" style={{ marginTop: 6 }} value={s.claudeModel} onChange={(e) => patch({ claudeModel: e.target.value })} />
-          </div>
-        </div>
-        <div style={{ marginTop: 12 }}>
-          <label className="meta">Gemini 每分鐘查詢上限（免費帳號約 10）</label>
-          <input className="field" style={{ marginTop: 6, maxWidth: 140 }} type="number" min={1} value={s.geminiRpm}
-            onChange={(e) => patch({ geminiRpm: Math.max(1, Number(e.target.value) || 10) })} />
-        </div>
-      </div>
-
-      <div className="card">
         <div className="section-title" style={{ marginTop: 0 }}>郵件來源</div>
         <select className="field" value={s.mailSource} onChange={(e) => patch({ mailSource: e.target.value as AppSettings['mailSource'] })}>
           <option value="gmail">我的 Gmail（讀信、把草稿存到 Gmail 草稿匣，不會自動寄）</option>
@@ -140,7 +133,7 @@ export function Settings({ settings, onSave }: Props) {
           <input type="checkbox" checked={!!cfg.googleCalendarEnabled} onChange={(e) => patchCfg({ googleCalendarEnabled: e.target.checked })} />
           <span>同時寫進 Google 行事曆（預設關閉）</span>
         </label>
-        <div style={{ color: 'var(--warn)', fontSize: 12, marginTop: 6 }}>
+        <div style={{ color: 'var(--warn-text)', fontSize: 12, marginTop: 6 }}>
           ⚠ 若你的 Google 行事曆是公開/共用的，私人行程會被外部看到。確定需要再開啟。
         </div>
         {cfg.googleCalendarEnabled && (
@@ -150,26 +143,50 @@ export function Settings({ settings, onSave }: Props) {
       </div>
 
       <div className="card">
-        <div className="section-title" style={{ marginTop: 0 }}>自動整理時間（App 開著才會跑）</div>
-        <div className="row">
-          <input className="field" style={{ maxWidth: 180 }} value={s.scheduleCron} onChange={(e) => patch({ scheduleCron: e.target.value })} />
-          <label className="row" style={{ gap: 6 }}>
-            <input type="checkbox" checked={s.scheduleEnabled} onChange={(e) => patch({ scheduleEnabled: e.target.checked })} />
-            <span>每天自動整理收件匣</span>
-          </label>
+        <div className="section-title" style={{ marginTop: 0 }}>自動整理（App 開著才會跑）</div>
+        <label className="row" style={{ gap: 6 }}>
+          <input type="checkbox" checked={s.scheduleEnabled} onChange={(e) => patch({ scheduleEnabled: e.target.checked })} />
+          <span>每天自動整理收件匣</span>
+        </label>
+        <div className="row" style={{ gap: 8, marginTop: 10 }}>
+          <span className="meta">每天</span>
+          <input className="field" type="time" style={{ maxWidth: 130 }} value={cronToTime(s.scheduleCron)} onChange={(e) => patch({ scheduleCron: timeToCron(e.target.value) })} />
+          <span className="meta">自動整理一次</span>
         </div>
-        <div className="meta" style={{ marginTop: 6 }}>時間格式：分 時 日 月 週。預設 7 8 * * * = 每天早上 08:07。</div>
-        <label className="row" style={{ gap: 6, marginTop: 10 }}>
+        <label className="row" style={{ gap: 6, marginTop: 12 }}>
           <input type="checkbox" checked={s.digestEnabled} onChange={(e) => patch({ digestEnabled: e.target.checked })} />
           <span>每次整理後，寄一封「每日摘要」給我自己（只寄給自己）</span>
         </label>
         <label className="row" style={{ gap: 6, marginTop: 10 }}>
           <input type="checkbox" checked={s.jarvisBridgeEnabled} onChange={(e) => patch({ jarvisBridgeEnabled: e.target.checked })} />
-          <span>把重要事項念出來（安全／金流／截止／草稿，需先安裝語音模組）</span>
+          <span>把重要事項念出來（需先安裝語音模組）</span>
         </label>
-        <input className="field" style={{ marginTop: 6 }} placeholder="語音事件資料夾（留空＝使用預設）"
-          value={s.jarvisEventsDir} onChange={(e) => patch({ jarvisEventsDir: e.target.value })} />
+        {s.jarvisBridgeEnabled && (
+          <input className="field" style={{ marginTop: 6 }} placeholder="語音事件資料夾（留空＝使用預設）"
+            value={s.jarvisEventsDir} onChange={(e) => patch({ jarvisEventsDir: e.target.value })} />
+        )}
       </div>
+
+      <details className="folddetail">
+        <summary>進階設定（AI 模型、查詢上限）</summary>
+        <div className="card" style={{ marginTop: 8 }}>
+          <div className="grid2">
+            <div>
+              <label className="meta">Gemini 模型</label>
+              <input className="field" style={{ marginTop: 6 }} value={s.geminiModel} onChange={(e) => patch({ geminiModel: e.target.value })} />
+            </div>
+            <div>
+              <label className="meta">Claude 模型</label>
+              <input className="field" style={{ marginTop: 6 }} value={s.claudeModel} onChange={(e) => patch({ claudeModel: e.target.value })} />
+            </div>
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <label className="meta">Gemini 每分鐘查詢上限（免費帳號約 10）</label>
+            <input className="field" style={{ marginTop: 6, maxWidth: 140 }} type="number" min={1} value={s.geminiRpm}
+              onChange={(e) => patch({ geminiRpm: Math.max(1, Number(e.target.value) || 10) })} />
+          </div>
+        </div>
+      </details>
     </div>
   )
 }

@@ -124,11 +124,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
   geminiRpm: 10,
   claudeModel: 'claude-haiku-4-5-20251001',
   mailSource: 'gmail',
-  localScanRoots: [], // family default: no foreign-drive scan (Lee enables his own roots in Settings)
+  localScanRoots: [], // default: no foreign-drive scan (user enables their own roots in Settings)
   scheduleCron: '7 8 * * *',
-  scheduleEnabled: false,
+  scheduleEnabled: true, // proactive by default — the assistant runs daily without the user pressing a button
   digestEnabled: true,
-  jarvisBridgeEnabled: false, // family default: off (Lee enables on his own machine which has Jarvis)
+  jarvisBridgeEnabled: false, // default off (voice module is opt-in, requires Jarvis installed)
   jarvisEventsDir: '',
   vipSenders: [],
   theme: 'linear-app'

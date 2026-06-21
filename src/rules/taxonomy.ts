@@ -35,3 +35,17 @@ export const TAXONOMY_PROMPT = CATEGORIES.map(
 
 export const ACTIONABLE: Category[] = ['ACTION_EVENT', 'ACTION_REPLY', 'ACTION_MATERIAL']
 export const FLAGS: Category[] = ['FLAG_SECURITY', 'FLAG_FINANCE']
+
+// Three priority buckets that drive the inbox grouping + 今日 summary.
+//   act   = 要回覆・有行程 (needs the user to do something)
+//   watch = 要留意 (security/finance flags, or anything flagged high-urgency)
+//   skip  = 可略過 (auto-classified noise/info — collapsed by default)
+export type Bucket = 'act' | 'watch' | 'skip'
+export const BUCKET_LABEL: Record<Bucket, string> = { act: '要回覆・有行程', watch: '要留意', skip: '可略過' }
+
+export function bucketOf(category: Category, urgency?: string): Bucket {
+  if (ACTIONABLE.includes(category)) return 'act'
+  if (FLAGS.includes(category)) return 'watch'
+  if (urgency === 'high') return 'watch'
+  return 'skip'
+}

@@ -7,6 +7,7 @@
 ---
 
 ## 最新狀態（2026-06-21，多 agent 巡查+硬化+介面重設計後）
+- **介面 v2（上網找參考 + 三 agent 對照審查後）**：參考 Linear/Raycast（暗色優先）、Superhuman（分流收件匣／every click is a failure）、Triage（卡片）、暗色 design-system token 規則。① **WCAG AA 對比修正**（--meta、膠囊文字、focus ring 由透明改實心、暗色去 drop-shadow、字重 590、警告色加亮）；② **今日摘要橫幅 + 三層分組收件匣**（要回覆有行程／要留意／可略過收合，點摘要數字可篩選）；③ **卡片一鍵動作**（複製草稿 + 草稿已存 Gmail 提示）與**行事曆「待你確認」可結案**（確認/移除按鈕，新增 `confirmed` 欄位 + IPC `calendar:confirm/remove`）；④ **預設自動整理**（scheduleEnabled 預設 true，主按鈕降級為「重新整理」）、進階設定（模型/RPM）與處理過程**收合**、cron 改**時間選擇器**；⑤ **emoji → 內聯 SVG 圖示**（Icon.tsx，currentColor，更接近 Linear）。gate：tsc 0／build 綠／safety 6/6／conflict 邏輯不變。
 - **介面重設計（UIUX/美術 agent + open-design linear-app）**：套用完整 Linear 設計語言（cv01/ss03 字體、510 字重、亮度階梯層次、半透明白邊框、accent 只用在主要按鈕/選取、自訂捲軸、空狀態、focus ring）。**所有後台/開發字樣移出介面**——刪掉側欄「硬規則」區塊、agent 類別名（Classifier/Orchestrator…→分類/統籌…）、狀態英文（start/done→進行中/完成）、分類英文 ID、`[自動·待確認]` 前綴（改成「待你確認」標籤）、IMAP/app-password/safeStorage/RPM/cron/Jarvis 路徑等 jargon 全換成非技術使用者看得懂的話。這些規則仍在程式層強制執行（後台），只是不顯示在前端。
 - **行事曆預設＝app 私密 JSON 行事曆**（不是 .ics；.ics 已退役）；Google 為 opt-in。多事件抽取（一信多約會）+ **時段衝突判別**（同會議合併／不同警告）。
 - 真 Gmail（IMAP app-password，**app 內輸入免改檔**）；雙 LLM 自動選（Claude CLI／Gemini）。

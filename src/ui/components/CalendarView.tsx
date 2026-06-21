@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { CalEvent } from '../../calendar/appCalendar'
+import { Icon } from './Icon'
 
 function ov(a: CalEvent, b: CalEvent): boolean {
   const as = +new Date(a.startISO), bs = +new Date(b.startISO)
@@ -25,9 +26,10 @@ function sameMeeting(a: string, b: string): boolean {
 export function CalendarView() {
   const [events, setEvents] = useState<CalEvent[]>([])
   const [loading, setLoading] = useState(true)
-  useEffect(() => {
-    window.api.listCalendar().then((e) => { setEvents(e); setLoading(false) })
-  }, [])
+  const reload = () => window.api.listCalendar().then((e) => { setEvents(e); setLoading(false) })
+  useEffect(() => { reload() }, [])
+  const confirm = (id: string) => window.api.confirmCalendar(id).then(reload)
+  const remove = (id: string) => window.api.removeCalendar(id).then(reload)
 
   const cutoff = Date.now() - 12 * 3600_000
   const upcoming = events.filter((e) => new Date(e.startISO).getTime() >= cutoff)
@@ -56,7 +58,7 @@ export function CalendarView() {
         <div className="muted">載入中…</div>
       ) : !days.length ? (
         <div className="empty-state">
-          <div className="ico">🗓</div>
+          <Icon name="calendar" size={26} />
           <div>目前沒有近期行程</div>
           <div className="hint">整理收件匣後，信裡有日期的事項會自動排到這裡（只存這台電腦，不會外流）。</div>
         </div>
@@ -66,15 +68,23 @@ export function CalendarView() {
             <div className="section-title" style={{ marginTop: 0 }}>{day}</div>
             {groups[day].map((e) => (
               <div className={`card${conflictIds.has(e.id) ? ' conflict' : ''}`} key={e.id} style={{ marginBottom: 8 }}>
-                <div style={{ fontWeight: 590, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {conflictIds.has(e.id) && <span className="badge danger">⚠ 時段衝突</span>}
+                <div style={{ fontWeight: 590, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  {conflictIds.has(e.id) && <span className="badge danger"><Icon name="alert" size={13} /> 時段衝突</span>}
                   <span>{e.summary.replace(/^\[自動[^\]]*\]\s*/, '')}</span>
-                  <span className="badge warn">待你確認</span>
+                  {e.confirmed
+                    ? <span className="badge ok"><Icon name="check" size={13} /> 已確認</span>
+                    : <span className="badge warn">待你確認</span>}
                 </div>
                 <div className="meta" style={{ marginTop: 5 }}>
                   {e.startISO.slice(11, 16)}–{e.endISO.slice(11, 16)} · 提前提醒 {e.reminders.map((m) => (m >= 60 ? `${m / 60} 小時前` : `${m} 分鐘前`)).join('、')}
                 </div>
                 {e.description && <div className="meta" style={{ marginTop: 6, whiteSpace: 'pre-wrap' }}>{e.description.replace(/^由 auto-email-assistant[^\n]*\n?/, '').slice(0, 200)}</div>}
+                {!e.confirmed && (
+                  <div className="row" style={{ marginTop: 10 }}>
+                    <button className="btn sm" onClick={() => confirm(e.id)}><Icon name="check" size={14} /> 確認</button>
+                    <button className="btn sm" onClick={() => remove(e.id)}><Icon name="x" size={14} /> 移除</button>
+                  </div>
+                )}
               </div>
             ))}
           </div>

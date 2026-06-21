@@ -17,6 +17,7 @@ export interface CalEvent {
   description: string
   source: string
   createdAt: string
+  confirmed?: boolean // user has reviewed this auto-added event (clears the 待你確認 state)
 }
 
 const FILE = path.join(os.homedir(), '.auto-email-assistant-calendar.json')
@@ -132,6 +133,22 @@ export async function listConflicts(): Promise<Array<[CalEvent, CalEvent]>> {
     }
   }
   return out
+}
+
+// Mark an auto-added event as reviewed by the user (strip the [自動·待確認] prefix).
+export async function confirmAppCalendarEvent(id: string): Promise<void> {
+  const events = await read()
+  const e = events.find((x) => x.id === id)
+  if (!e) return
+  e.confirmed = true
+  e.summary = e.summary.replace(/^\[自動[^\]]*\]\s*/, '')
+  await write(events)
+}
+
+// Remove an event the user rejected.
+export async function removeAppCalendarEvent(id: string): Promise<void> {
+  const events = await read()
+  await write(events.filter((x) => x.id !== id))
 }
 
 export async function listAppCalendar(): Promise<CalEvent[]> {
