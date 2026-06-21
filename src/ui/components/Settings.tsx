@@ -131,6 +131,10 @@ export function Settings({ settings, onSave }: Props) {
         <div className="section-title" style={{ marginTop: 0 }}>行事曆</div>
         <div className="meta">預設：含日期的事項自動寫進 <b>app 私密行事曆</b>（只存本機，不外流；在「行事曆」分頁看）。</div>
         <label className="row" style={{ gap: 6, marginTop: 10 }}>
+          <input type="checkbox" checked={s.remindersEnabled} onChange={(e) => patch({ remindersEnabled: e.target.checked })} />
+          <span>事件前跳鬧鐘提醒（依各事件設定的提前提醒時間，App 開著才會響）</span>
+        </label>
+        <label className="row" style={{ gap: 6, marginTop: 10 }}>
           <input type="checkbox" checked={!!cfg.googleCalendarEnabled} onChange={(e) => patchCfg({ googleCalendarEnabled: e.target.checked })} />
           <span>同時寫進 Google 行事曆（預設關閉）</span>
         </label>

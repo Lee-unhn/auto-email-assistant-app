@@ -10,6 +10,7 @@ import { runTriage, getMailProvider } from './triage'
 import { listAppCalendar, confirmAppCalendarEvent, removeAppCalendarEvent } from '../src/calendar/appCalendar'
 import { readConfig, writeConfig } from '../src/config/localConfig'
 import { applySchedule } from './scheduler'
+import { startReminderScheduler } from './reminders'
 
 let win: BrowserWindow | null = null
 let tray: Tray | null = null
@@ -171,6 +172,7 @@ app.whenReady().then(async () => {
   createTray()
   const s = await loadSettings()
   applySchedule(s, () => win && runTriage(win, s))
+  startReminderScheduler(() => win) // fire calendar alarms before events
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
     else showWindow()
