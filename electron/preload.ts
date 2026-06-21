@@ -17,6 +17,7 @@ const api: AppApi = {
   lastRun: () => ipcRenderer.invoke(IPC.lastRun),
   openPath: (p) => ipcRenderer.invoke(IPC.openPath, p),
   revealPath: (p) => ipcRenderer.invoke(IPC.revealPath, p),
+  openExternal: (url) => ipcRenderer.invoke(IPC.openExternal, url),
   onAgentEvent: (cb) => {
     const h = (_e: unknown, d: any) => cb(d)
     ipcRenderer.on(IPC.agentEvent, h)

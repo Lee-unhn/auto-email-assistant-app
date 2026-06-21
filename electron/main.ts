@@ -113,6 +113,11 @@ function registerIpc(): void {
   ipcMain.handle(IPC.lastRun, () => loadLastRun())
   ipcMain.handle(IPC.openPath, (_e, p: string) => shell.openPath(p))
   ipcMain.handle(IPC.revealPath, (_e, p: string) => shell.showItemInFolder(p))
+  // Navigation-only: open external links (onboarding guides) in the system browser.
+  // Restricted to http(s) so it can't be coerced into launching local executables.
+  ipcMain.handle(IPC.openExternal, (_e, url: string) => {
+    if (/^https?:\/\//i.test(url)) return shell.openExternal(url)
+  })
 }
 
 app.whenReady().then(async () => {

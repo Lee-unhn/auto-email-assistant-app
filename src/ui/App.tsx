@@ -4,6 +4,7 @@ import { InboxView } from './components/InboxView'
 import { CalendarView } from './components/CalendarView'
 import { Settings } from './components/Settings'
 import { Icon } from './components/Icon'
+import { Onboarding } from './components/Onboarding'
 
 function friendlyError(m: string): { msg: string; toSettings: boolean } {
   if (/(gmail|帳密|app[\s-]?password)/i.test(m) && /(未設定|找不到|no gmail)/i.test(m))
@@ -65,6 +66,8 @@ export function App() {
   }
 
   if (!settings) return <div style={{ padding: 24 }} className="muted">載入中…</div>
+
+  if (!settings.onboarded) return <Onboarding settings={settings} onSave={saveSettings} onRun={runTriage} />
 
   return (
     <div className="app">

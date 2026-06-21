@@ -10,7 +10,11 @@ const runsDir = () => path.join(ud(), 'runs')
 
 export async function loadSettings(): Promise<AppSettings> {
   try {
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(await fs.readFile(settingsFile(), 'utf-8')) }
+    const parsed = JSON.parse(await fs.readFile(settingsFile(), 'utf-8'))
+    // Migration: an existing settings file predates onboarding → don't show the
+    // wizard to users who already configured the app.
+    if (parsed.onboarded === undefined) parsed.onboarded = true
+    return { ...DEFAULT_SETTINGS, ...parsed }
   } catch {
     return { ...DEFAULT_SETTINGS }
   }

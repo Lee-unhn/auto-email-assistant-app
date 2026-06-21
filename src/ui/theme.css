@@ -168,6 +168,26 @@ a.link { color: var(--accent-hover); text-decoration: none; cursor: pointer; tra
 a.link:hover { color: var(--fg); text-decoration: underline; text-underline-offset: 2px; }
 .scrollbox { max-height: 240px; overflow: auto; padding-right: 4px; }
 
+/* ── onboarding wizard ───────────────────────────────────────────────────── */
+.onb-wrap { display: flex; align-items: center; justify-content: center; height: 100vh; padding: 24px; background: radial-gradient(120% 80% at 50% 0%, #15161a 0%, var(--bg) 60%); }
+.onb-card { position: relative; width: 100%; max-width: 460px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px 26px 26px; box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.7); }
+.onb-steps { display: flex; gap: 8px; justify-content: center; margin-bottom: 22px; }
+.onb-dot { font-size: 11px; font-weight: 590; color: var(--meta); padding: 3px 10px; border-radius: var(--radius-pill); border: 1px solid var(--border-soft); }
+.onb-dot.on { color: #fff; background: var(--accent); border-color: transparent; }
+.onb-dot.past { color: var(--success-text); border-color: rgba(39, 166, 68, 0.4); }
+.onb-body { text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.onb-body h1 { font-size: 19px; font-weight: 590; margin: 2px 0; letter-spacing: -0.02em; }
+.onb-body p { margin: 0; color: var(--fg-2); font-size: 13.5px; line-height: 1.6; }
+.onb-body .row { width: 100%; }
+.onb-logo { width: 48px; height: 48px; border-radius: 13px; background: linear-gradient(135deg, var(--accent), var(--accent-hover)); display: flex; align-items: center; justify-content: center; color: #fff; margin-bottom: 4px; }
+.onb-logo .dot { width: 22px; height: 22px; border-radius: 7px; background: rgba(255, 255, 255, 0.9); }
+.onb-list { text-align: left; align-self: stretch; margin: 4px 0; padding-left: 20px; color: var(--fg-2); font-size: 13px; line-height: 1.7; }
+.onb-list code { font-family: var(--mono); font-size: 12px; background: rgba(255, 255, 255, 0.06); padding: 1px 5px; border-radius: 4px; }
+.onb-actions { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 8px; }
+.onb-actions .btn { justify-content: center; }
+.onb-skip { position: absolute; top: 16px; right: 18px; background: none; border: 0; color: var(--meta); font-size: 12px; cursor: pointer; }
+.onb-skip:hover { color: var(--fg-2); }
+
 /* ── 今日 summary banner ─────────────────────────────────────────────────── */
 .today { background: linear-gradient(180deg, var(--surface-2), var(--surface)); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; flex-shrink: 0; }
 .today-head { display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 590; color: var(--fg); }

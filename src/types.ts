@@ -114,6 +114,7 @@ export interface AppSettings {
   jarvisEventsDir: string
   vipSenders: string[]
   theme: string
+  onboarded: boolean // first-run wizard completed/skipped
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -131,5 +132,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   jarvisBridgeEnabled: false, // default off (voice module is opt-in, requires Jarvis installed)
   jarvisEventsDir: '',
   vipSenders: [],
-  theme: 'linear-app'
+  theme: 'linear-app',
+  onboarded: false
 }

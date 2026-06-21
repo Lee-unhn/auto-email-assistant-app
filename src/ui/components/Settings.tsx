@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { AppSettings, LLMProviderId } from '../../types'
 import type { LocalConfig } from '../../config/localConfig'
+import { Icon } from './Icon'
 
 interface Props {
   settings: AppSettings
@@ -187,6 +188,10 @@ export function Settings({ settings, onSave }: Props) {
           </div>
         </div>
       </details>
+
+      <button className="btn" style={{ alignSelf: 'flex-start' }} onClick={() => onSave({ onboarded: false })}>
+        <Icon name="refresh" size={14} /> 重新執行設定精靈
+      </button>
     </div>
   )
 }

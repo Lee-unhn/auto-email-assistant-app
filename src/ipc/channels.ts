@@ -19,6 +19,7 @@ export const IPC = {
   lastRun: 'triage:last',
   openPath: 'shell:openPath',
   revealPath: 'shell:reveal',
+  openExternal: 'shell:openExternal',
   agentEvent: 'evt:agent', // main → renderer (live)
   triageProgress: 'evt:progress' // main → renderer (live)
 } as const
@@ -40,6 +41,7 @@ export interface AppApi {
   lastRun(): Promise<TriageRun | null>
   openPath(p: string): Promise<void>
   revealPath(p: string): Promise<void>
+  openExternal(url: string): Promise<void>
   onAgentEvent(cb: (e: AgentEvent & { threadId: string }) => void): () => void
   onProgress(cb: (p: { done: number; total: number; subject: string }) => void): () => void
 }
