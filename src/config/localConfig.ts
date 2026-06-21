@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs'
 import os from 'os'
 import path from 'path'
+import { writeJsonAtomic } from '../util/atomicWrite'
 
 // Per-machine config (one family member per PC). Holds the Apps Script webhook URLs
 // Lee sets up once per person. No secrets here (keys stay in safeStorage / ~/.claude).
@@ -28,7 +29,7 @@ export async function readConfig(): Promise<LocalConfig> {
 }
 
 export async function writeConfig(cfg: LocalConfig): Promise<void> {
-  await fs.writeFile(FILE, JSON.stringify(cfg, null, 2), 'utf-8')
+  await writeJsonAtomic(FILE, cfg)
 }
 
 export const configPath = FILE

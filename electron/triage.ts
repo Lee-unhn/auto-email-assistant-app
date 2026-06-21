@@ -12,7 +12,8 @@ import { readConfig } from '../src/config/localConfig'
 import { IPC } from '../src/ipc/channels'
 import { getKey } from './secrets'
 import { readGeminiKey, readGmailCreds } from './keyloader'
-import { loadProcessed, saveProcessed, saveRun, paths } from './state'
+import { saveRun, paths } from './state'
+import { makeStore } from '../src/queue/taskStore'
 import { localScan } from './localScan'
 
 function fixturesDir(): string {
@@ -50,10 +51,17 @@ export async function runTriage(win: BrowserWindow | null, settings: AppSettings
   const mail = await getMailProvider(settings)
   const cfg = await readConfig()
 
-  const processed = await loadProcessed()
-  const processedSet = new Set(processed)
+  // Single shared ledger with the headless daemon (keyed by messageId) → no double-processing.
+  const store = makeStore(cfg.sheetUrl || undefined)
+  const known = new Set((await store.list()).map((t) => t.id))
   const threads = await mail.listThreads({ maxResults: 40 })
-  const fresh = threads.filter((t) => !processedSet.has(t.id))
+  const fresh = threads.filter((t) => !known.has(t.messages[0]?.id ?? t.id))
+  await store.upsertPending(
+    fresh.map((t) => {
+      const m = t.messages[0]
+      return { id: m.id, from: m.from, subject: m.subject, body: m.body, date: m.date }
+    })
+  )
 
   const run: TriageRun = {
     startedAt: new Date().toISOString(),
@@ -130,13 +138,13 @@ export async function runTriage(win: BrowserWindow | null, settings: AppSettings
 
     run.outcomes.push(outcome)
     run.stats[outcome.classification.category] = (run.stats[outcome.classification.category] ?? 0) + 1
+    // mark done in the shared ledger immediately (crash-safe, no end-of-run batch)
+    await store.update(thread.messages[0]?.id ?? thread.id, { status: 'done', category: outcome.classification.category })
     done++
   }
 
   run.finishedAt = new Date().toISOString()
   win?.webContents.send(IPC.triageProgress, { done, total: fresh.length, subject: '完成' })
-
-  await saveProcessed([...processed, ...fresh.map((t) => t.id)])
   await saveRun(run)
 
   // Daily-digest self-notification (only to the user's own address).

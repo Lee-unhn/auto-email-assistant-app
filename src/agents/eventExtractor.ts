@@ -6,10 +6,14 @@ interface RawEvent extends Partial<ExtractedEvent> {}
 
 function normalize(e: RawEvent): ExtractedEvent | null {
   if (!e || !e.startISO || !e.summary) return null
+  // Drop events with an unparseable date — otherwise they silently bypass
+  // conflict detection (overlaps() would see NaN and never flag them).
+  if (Number.isNaN(Date.parse(e.startISO))) return null
+  const endValid = e.endISO && !Number.isNaN(Date.parse(e.endISO))
   return {
     summary: e.summary.startsWith('[自動') ? e.summary : `[自動·待確認] ${e.summary}`,
     startISO: e.startISO,
-    endISO: e.endISO ?? e.startISO,
+    endISO: endValid ? (e.endISO as string) : e.startISO,
     timeZone: e.timeZone ?? 'Asia/Taipei',
     reminders: e.reminders?.length ? e.reminders : [1440, 60],
     sourceNote: e.sourceNote ?? '由 auto-email-assistant 從信件自動建立。不需要可刪。'

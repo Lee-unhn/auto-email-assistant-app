@@ -1,13 +1,21 @@
 import { useEffect, useState } from 'react'
 import type { CalEvent } from '../../calendar/appCalendar'
 
-const ov = (a: CalEvent, b: CalEvent) =>
-  new Date(a.startISO) < new Date(b.endISO) && new Date(a.endISO) > new Date(b.startISO)
+function ov(a: CalEvent, b: CalEvent): boolean {
+  const as = +new Date(a.startISO), bs = +new Date(b.startISO)
+  let ae = +new Date(a.endISO), be = +new Date(b.endISO)
+  if ([as, bs, ae, be].some((n) => Number.isNaN(n))) return false
+  if (ae <= as) ae = as + 60000
+  if (be <= bs) be = bs + 60000
+  return as < be && ae > bs
+}
 const norm = (s: string) => s.replace(/\[自動[^\]]*\]/g, '').replace(/[\s\p{P}\p{S}]/gu, '').toLowerCase()
 function sameMeeting(a: string, b: string): boolean {
   const x = norm(a), y = norm(b)
   if (!x || !y) return false
-  if (x === y || x.includes(y) || y.includes(x)) return true
+  if (x === y) return true
+  if (x.length < 4 || y.length < 4) return false
+  if (x.includes(y) || y.includes(x)) return true
   const sa = new Set(x), sb = new Set(y)
   let i = 0
   for (const c of sa) if (sb.has(c)) i++

@@ -34,8 +34,13 @@ async function write(events: CalEvent[]): Promise<void> {
 
 // ── time-overlap + same-meeting heuristics ──────────────────────────
 export function overlaps(a: { startISO: string; endISO: string }, b: { startISO: string; endISO: string }): boolean {
-  const as = new Date(a.startISO).getTime(), ae = new Date(a.endISO).getTime()
-  const bs = new Date(b.startISO).getTime(), be = new Date(b.endISO).getTime()
+  const as = new Date(a.startISO).getTime(), bs = new Date(b.startISO).getTime()
+  let ae = new Date(a.endISO).getTime(), be = new Date(b.endISO).getTime()
+  if ([as, bs, ae, be].some((n) => Number.isNaN(n))) return false
+  // Give zero-duration (deadline/point) events a 1-min window so they still
+  // participate in conflict/merge detection instead of never overlapping.
+  if (ae <= as) ae = as + 60_000
+  if (be <= bs) be = bs + 60_000
   return as < be && ae > bs
 }
 
@@ -47,7 +52,10 @@ function norm(s: string): string {
 export function sameMeeting(a: string, b: string): boolean {
   const x = norm(a), y = norm(b)
   if (!x || !y) return false
-  if (x === y || x.includes(y) || y.includes(x)) return true
+  if (x === y) return true
+  // very short titles (晨會 vs 晨跑) → require exact match, no fuzzy merge
+  if (x.length < 4 || y.length < 4) return false
+  if (x.includes(y) || y.includes(x)) return true
   const sa = new Set(x), sb = new Set(y)
   let inter = 0
   for (const c of sa) if (sb.has(c)) inter++

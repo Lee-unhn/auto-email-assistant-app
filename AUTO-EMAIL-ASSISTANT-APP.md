@@ -6,6 +6,14 @@
 
 ---
 
+## 最新狀態（2026-06-21，多 agent 巡查+硬化後）
+- **行事曆預設＝app 私密 JSON 行事曆**（不是 .ics；.ics 已退役）；Google 為 opt-in。多事件抽取（一信多約會）+ **時段衝突判別**（同會議合併／不同警告）。
+- 真 Gmail（IMAP app-password，**app 內輸入免改檔**）；雙 LLM 自動選（Claude CLI／Gemini）。
+- 耐用佇列 + **GUI 與 daemon 共用單一 messageId 帳本**（不重複處理）；關鍵寫入皆原子化。
+- 安全：唯一 send 出口鎖本人（assertNeverSend 可達真守衛）；無寄信/刪除/金流/設定路徑；信件當資料。
+- gate：tsc 0 / build 綠 / safetytest 6/6 / 多 agent 兩輪驗證。詳見 README、SAFETY-CHECKLIST、FAMILY-SETUP、本檔。
+- 後續（非阻擋）：installer 簽章（現用 unpacked exe+開介面.bat）、P1 安全強化（openPath 白名單/sandbox:true/webhook token）、附件解析、VIP urgency。
+
 ## 0. Phase 完成度
 
 | Phase | 內容 | 完成度 | 證據 |

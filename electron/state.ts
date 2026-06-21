@@ -2,6 +2,7 @@ import { promises as fs } from 'fs'
 import path from 'path'
 import { app } from 'electron'
 import { DEFAULT_SETTINGS, type AppSettings, type TriageRun } from '../src/types'
+import { writeJsonAtomic } from '../src/util/atomicWrite'
 
 const ud = () => app.getPath('userData')
 const settingsFile = () => path.join(ud(), 'settings.json')
@@ -17,7 +18,7 @@ export async function loadSettings(): Promise<AppSettings> {
 }
 
 export async function saveSettings(s: AppSettings): Promise<void> {
-  await fs.writeFile(settingsFile(), JSON.stringify(s, null, 2), 'utf-8')
+  await writeJsonAtomic(settingsFile(), s)
 }
 
 export async function loadProcessed(): Promise<string[]> {
@@ -29,14 +30,14 @@ export async function loadProcessed(): Promise<string[]> {
 }
 
 export async function saveProcessed(ids: string[]): Promise<void> {
-  await fs.writeFile(processedFile(), JSON.stringify([...new Set(ids)], null, 2), 'utf-8')
+  await writeJsonAtomic(processedFile(), [...new Set(ids)])
 }
 
 export async function saveRun(run: TriageRun): Promise<void> {
   await fs.mkdir(runsDir(), { recursive: true })
   const day = run.startedAt.slice(0, 10)
-  await fs.writeFile(path.join(runsDir(), `${day}.json`), JSON.stringify(run, null, 2), 'utf-8')
-  await fs.writeFile(path.join(ud(), 'last_run.json'), JSON.stringify(run, null, 2), 'utf-8')
+  await writeJsonAtomic(path.join(runsDir(), `${day}.json`), run)
+  await writeJsonAtomic(path.join(ud(), 'last_run.json'), run)
 }
 
 export async function loadLastRun(): Promise<TriageRun | null> {
