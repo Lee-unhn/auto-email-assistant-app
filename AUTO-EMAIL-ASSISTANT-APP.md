@@ -1,0 +1,79 @@
+# 📧 Auto Email Assistant (desktop app)
+
+> 雙 LLM（Gemini/Claude 可切換）獨立 .exe 桌面郵件助理。讀信 → 分流 → 抽日期建 .ics（含提前提醒）→ 草擬回信（不寄）→ 找材料（本機+web）→ agent 協作。介面用 open-design `linear-app` 系統。
+> Owner: Lee Yun-han（公開署名 JasonLee）｜建立 2026-06-20｜路徑 `C:\dev\auto-email-assistant-app`
+> 前身：`G:\claude專案資料夾\auto-email-assistant`（MCP 排程代理原型，邏輯 v0 來源）。
+
+---
+
+## 0. Phase 完成度
+
+| Phase | 內容 | 完成度 | 證據 |
+|---|---|---|---|
+| P1 Scaffold | Electron+Vite+React+TS+Tailwind v4，三 bundle 出得了 | ✅ 100% | `npm run build` 綠燈 |
+| P2 雙 LLM | LLMProvider 抽象 + Gemini/Claude 實作 + Settings 金鑰/切換/測試 | ✅ 100% | `src/llm/*`、Settings 測試鈕 |
+| P3 規則+來源 | taxonomy/hardRules 移植 + SampleMailProvider + 8 樣本信 | ✅ 100% | smoke 11/11、fixtures |
+| P4 Agent 協作 | 5 角色 + Orchestrator 判斷複雜度 + AgentPanel 即時 | ✅ 100% | `src/agents/*`、UI |
+| P5 行事曆+草稿 | .ics(VALARM 提前提醒) + .eml 草稿(不寄) | ✅ 100% | smoke ICS 測試 |
+| P6 材料檢索 | 本機唯讀掃描(G:\+C:\dev) + web(LLM native search) | ✅ 100% | `electron/localScan.ts`、researcher |
+| P7 UI/美術 | open-design linear-app 主題、深色精緻 | ✅ 100% | `theme.css`、dev 啟動驗證 |
+| P8 排程+state | node-cron + JSON state/processed/run/last_run | ✅ 100% | `electron/scheduler.ts`、`state.ts` |
+| P9 打包 .exe | electron-builder portable/unpacked | ✅ exe / 🟡 安裝檔 | `dist\win-unpacked\*.exe` 可跑；NSIS 待 dev mode |
+| **P10 真實 Gmail+Gemini** | IMAP app-password 讀信 + APPEND 草稿 + Gemini live + backoff | ✅ **100%** | `realrun.ts` 對真實收件匣跑通：6 封真信分類正確、產 1 個 .ics（見下） |
+
+---
+
+## 1. 技術棧
+Electron 33 · React 18 · TypeScript · Vite 5 · electron-vite · Tailwind v4 · electron-builder。
+LLM SDK：`@google/generative-ai`、`@anthropic-ai/sdk`。`node-cron` 排程。金鑰 `safeStorage` 加密。狀態存 JSON（捨棄 sqlite 避免原生模組打包風險）。
+
+## 2. 架構（三 bundle）
+- **main**（Node 服務）：triage runner、agents 編排、localScan、ics、secrets、scheduler、state。
+- **preload**：contextBridge 暴露 `window.api`（IPC 邊界，renderer 不碰 Node/金鑰）。
+- **renderer**：React UI（Sidebar/InboxView/AgentPanel/Settings）。
+- 視覺架構圖（最新）：`docs/diagrams/2026-06-21_auto-email-assistant-app/architecture.html`（含真 Gmail/私密行事曆/衝突判別/佇列/Jarvis 橋）；baseline：`2026-06-20_..._預設圖/`。
+
+## 3. 三個可換抽象
+| 抽象 | 介面 | 實作 |
+|---|---|---|
+| `LLMProvider` | `complete({system,user,json?,useWebSearch?})` | Gemini(預設·search grounding) / Claude(web_search) |
+| `MailProvider` | `listThreads/getThread/saveDraft` | Sample(v1) / Gmail(骨架) |
+| `CalendarProvider` | `.ics` | ics.ts（VALARM 提前提醒） |
+
+## 4. Agent 協作（判斷複雜度）
+Orchestrator：噪音/通知→只 Classifier；FLAG→只通知不動作；ACTION_EVENT→+EventExtractor；ACTION_REPLY/MATERIAL→fan out Researcher+EventExtractor+ReplyDrafter+Verifier 再 synthesize。即時軌跡串到 AgentPanel。
+
+## 🚫 硬規則（移植，凌駕一切）
+不寄信(只存 .eml 草稿) · 不碰密碼/passkey/安全設定 · 不動金流 · 不刪任何東西 · 不對 no-reply 信亂回 · 材料檢索唯讀 · 自動產物標 `[自動·待確認]` · 金鑰加密永不 log/公開 · 公開署名用 JasonLee。
+
+## 5. 啟動 / 打包 / 測試
+```bash
+npm install
+npm run dev          # 開發（Electron 視窗）
+npm run build:win    # 打包 → dist/（NSIS 安裝檔 + portable .exe）
+node --experimental-strip-types smoke.ts   # 核心邏輯測試（免金鑰）
+```
+首用：Settings 貼 Gemini 金鑰(Google AI Studio)→測試→Inbox→執行分流。
+
+## 6. heavy_dirs
+無（純前端+服務，無大模型/資料集）。
+
+## 7. 真實資料里程碑（2026-06-20）
+- **真 Gmail（IMAP app-password）讀取跑通** — `electron/keyloader.ts` 讀 `~/.claude/secrets/gemini_api_key.env` + `gmail_smtp.env`（只讀特定檔、值不外洩）。`src/mail/imap.ts` IMAP 讀 INBOX 未讀 + APPEND 草稿到 Gmail Drafts（不寄）。
+- **Gemini live 跑通** — 預設模型改 `gemini-2.5-flash`（2.0-flash 該金鑰被 429）；**關閉 2.5 thinking**（否則 thinking 吃光 output budget 害長信分類失敗）；加 429 backoff + 呼叫間隔。
+- **實測**（`realrun.ts`，唯讀+本地產物）：6 封真信 → 玉山改密碼=FLAG_SECURITY(只通知)、PSMF=ACTION_EVENT→`.ics✓`、其餘 NOISE 正確。產物在 `~/.auto-email-assistant-realrun/`。
+- GUI app 也已接：`mailSource` 預設 `gmail`，`runTriage`/`listThreads` 走 `getMailProvider` + keyloader fallback，免在 Settings 貼金鑰即可跑。
+- **Claude 模式（無 API key）✅**：`src/llm/claudeCli.ts` 用 Claude Code 訂閱 `claude -p`（prompt 走 stdin，仿 jarvis brain.py），無需 Anthropic API key、零額外成本。provider='claude' 時若無 key 自動走 CLI。**實測（2026-06-21）真實收件匣 6/6 高信心無 fallback**（比 Gemini 免費更穩；PSMF 週報正確判為 SELF_AUTOMATED）；摘要 email + Jarvis 2 事件全跑通。`npx tsx realrun.ts claude` 可重測。
+- **任務佇列 Sheet-as-DB（2026-06-21）**：解耦 讀信(無 LLM 零失敗)→DB 佇列(pending)→處理(可重試)。失敗留 pending 重試,不消失。解任務遺失/間歇429,但不放大 Gemini 日 RPD。`src/queue/taskStore.ts`(Local JSON / Google Sheet 雙後端)、`queue.ts`(ingest/process/run/--watch/--sheet)、`google-sheet-task-db.gs`(Apps Script 後端)、`QUEUE.md`。
+- **任務執行 + 即時/間隔讀取（2026-06-21）**：`ACTION_MATERIAL` 已改為產出實際交付物（草稿正文）。實證 Lee 自寄任務信「三家公司分析+求職建議」→ 產出完整分析草稿（本地、未寄、墨鉅查無資料誠實標待確認）。讀取：`watch.ts`（`--interval`/`--provider claude`/`--once`/`--dry`，idempotent）；`executetask.ts` 詳細執行器。**執行邊界**：只自動做安全可逆動作，寄信/金流/刪除/設定一律只準備+待確認。Claude CLI 無 web grounding，強網路查證走 Gemini 模式。
+
+## 8. v2 Roadmap（Chief of Staff 裁決排序，2026-06-20）
+> CoS 裁決：**否決**「挖 GitHub repos + 自動 loop 完成所有功能」的開放式迴圈（VDrama over-engineering 教訓，且先前一封真信都沒處理過）。先把真實資料跑穩，再加東西。
+- **P1 ✅ 完成（2026-06-20）**：全域 RateLimiter（滑動視窗 RPM + 最小間隔 + 並發 1）+ 尊重 429 `retryDelay` + **模型 fallback 鏈**（2.5-flash 當日用罄→`gemini-flash-latest`，實測為獨立額度桶）+ 自寄摘要過濾（斷回饋迴圈）+ 設定頁可調 RPM。`src/llm/rateLimiter.ts`、`gemini.ts`。
+  - **免費當日配額是天花板**：同日多次實測把多個模型的 free RPD 用罄→真跑會 fallback。解法：等每日重置 / 加付費 Gemini key（RPD 大增）。限流器只解每分鐘爆量，解不了「日配額用完」。乾淨 6/6 跑已在耗盡前驗過。
+- **P2（待決策）**：自動寄信（需 per-send 確認設計）＋真 Google Calendar 寫入（需 OAuth client，人類關卡）。
+- **語音/通話 → 委派 Jarvis ✅ 事件橋完成（2026-06-20）**。本 app 當事件產生者，Jarvis 當語音面；**不重做語音**。解耦 JSON 佇列 `~/.jarvis-events/inbox/` → Jarvis `src/email_events.py` 念出（用其 index-tts/edge-tts）+ corpus 記錄。產生端 `src/bridge/jarvisBridge.ts`，分流後自動 emit（security/finance/deadline/draft/summary）。契約見 [BRIDGE.md](BRIDGE.md)。已驗：3 事件 emit → Jarvis dry 正確讀出；speak 匯入 OK。
+- **打電話給使用者**：Twilio（付費，觸發 AI Cost Guard：號碼 ~$1-2/月 + 通話 ~$0.013-0.02/分；用前報價）。**最後做**。
+- **發訊息給使用者**：免費優先走 Jarvis 既有 Discord/Email adapter，或 hermes-agent gateway。
+- **GitHub 功能挖礦**：保留為「有明確驗收標準 + 人類檢查點」的受控任務，不開放式自動 loop。
+- 其他：真 Calendar 寫入、macOS 打包、冪等升級 Gmail label `🤖AutoTriaged`、Claude 路徑需 Anthropic API key（目前只有 Gemini 金鑰）。

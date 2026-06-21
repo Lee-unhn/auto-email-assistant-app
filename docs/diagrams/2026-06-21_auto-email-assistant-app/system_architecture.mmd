@@ -1,0 +1,86 @@
+%%{init: {'flowchart': {'rankSpacing': 68, 'nodeSpacing': 28, 'curve': 'basis'}} }%%
+flowchart LR
+  classDef uin fill:#74c7ec,stroke:#1e66f5,color:#1e1e2e;
+  classDef ui fill:#cba6f7,stroke:#8839ef,color:#1e1e2e;
+  classDef pipe fill:#f9e2af,stroke:#df8e1d,color:#1e1e2e;
+  classDef safe fill:#fab387,stroke:#fe640b,color:#1e1e2e;
+  classDef model fill:#a6e3a1,stroke:#40a02b,color:#1e1e2e;
+  classDef out fill:#f5c2e7,stroke:#ea76cb,color:#1e1e2e;
+  classDef worker fill:#94e2d5,stroke:#179299,color:#1e1e2e;
+
+  U([使用者/家人 ▶ 雙擊啟動 / 開機常駐]):::uin
+  SCH[/watch·queue 間隔輪詢/]:::worker
+
+  subgraph RENDER[Renderer · React UI]
+    SB[Sidebar · LLM 切換]:::ui
+    INBOX[InboxView 分類卡]:::ui
+    CALV[CalendarView 私密行事曆]:::ui
+    AP[AgentPanel 即時軌跡]:::ui
+    SET[Settings 金鑰/行事曆/排程]:::ui
+  end
+
+  subgraph MAIN[Electron Main · 背景 daemon]
+    TRI[/triage / queue runner/]:::pipe
+    QUEUE[(taskStore 佇列 DB · 失敗重試)]:::model
+    subgraph AG[Agent Orchestrator · 判複雜度]
+      OR[/Orchestrator/]:::pipe
+      CL[/Classifier 11 類/]:::pipe
+      EV[/EventExtractor 多事件/]:::pipe
+      RE[/Researcher 本機+web/]:::pipe
+      DR[/ReplyDrafter/]:::pipe
+      VF[/Verifier 對抗複核/]:::pipe
+    end
+    CONF[/衝突判別 · 同會議合併 / 不同警告/]:::pipe
+    HR[HardRules 硬規則]:::safe
+    KEY[(keyloader 金鑰)]:::model
+    CFG[(localConfig 設定)]:::model
+  end
+
+  subgraph LLM[LLMProvider · 自動選]
+    GE[(Gemini · 限流+模型 fallback)]:::model
+    CLD[(Claude CLI · +web 搜尋)]:::model
+  end
+
+  subgraph SRC[郵件來源]
+    IMAP[(真 Gmail · IMAP app-pw)]:::model
+    SAMP[(樣本 fixtures)]:::model
+  end
+
+  subgraph OUT[輸出 · 皆待確認]
+    PCAL[app 私密行事曆 · 含提前提醒]:::out
+    GCAL[Google 行事曆 · opt-in]:::out
+    EML[.eml 草稿 · 不寄]:::out
+    DIG[每日摘要 email · 只寄自己]:::out
+    JBR[Jarvis 事件佇列]:::out
+  end
+
+  JARVIS[[Jarvis · 語音念出/通知面]]:::worker
+
+  U --> RENDER
+  SCH -.-> TRI
+  INBOX --> TRI
+  IMAP --> TRI
+  SAMP --> TRI
+  TRI --> QUEUE
+  QUEUE --> OR
+  OR --> CL
+  CL --> EV
+  EV --> CONF
+  OR --> RE
+  OR --> DR
+  DR --> VF
+  CL --> GE
+  CL -.-> CLD
+  RE --> CLD
+  HR -. inject .-> AG
+  CONF --> PCAL
+  CONF -.-> GCAL
+  DR --> EML
+  TRI --> DIG
+  TRI --> JBR
+  CONF -. 衝突警告 .-> JBR
+  JBR --> JARVIS
+  KEY --> LLM
+  CFG --> GCAL
+  PCAL --> CALV
+  TRI -.-> AP

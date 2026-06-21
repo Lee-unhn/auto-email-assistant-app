@@ -1,0 +1,28 @@
+appId: io.jasonlee.autoemailassistant
+productName: Auto Email Assistant
+directories:
+  output: dist
+  buildResources: build
+files:
+  - out/**/*
+  - package.json
+asarUnpack:
+  - resources/**
+extraResources:
+  - from: fixtures
+    to: fixtures
+  - from: src/design/linear-app
+    to: design/linear-app
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+portable:
+  artifactName: AutoEmailAssistant-${version}-portable.exe

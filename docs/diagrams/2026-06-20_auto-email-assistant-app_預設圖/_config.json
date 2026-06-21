@@ -1,0 +1,21 @@
+{
+  "title_emoji": "📧",
+  "title": "Auto Email Assistant",
+  "subtitle": "dual-LLM 桌面郵件助理 · 分流 / 行事曆 / 草稿 / agent 協作 · local-first",
+  "tabs": [
+    {
+      "id": "overview",
+      "label": "🌐 總圖 Overview",
+      "strong": "系統總覽",
+      "desc": "Renderer ↔ Electron Main ↔ LLMProvider ↔ 輸出（.ics / .eml）",
+      "mmd": "system_architecture.mmd"
+    },
+    {
+      "id": "mindmap",
+      "label": "🧠 Mind Map 思維導圖",
+      "strong": "概念導圖",
+      "desc": "點任一節點看其祖先/子孫關聯",
+      "mmd": "mindmap.mmd"
+    }
+  ]
+}

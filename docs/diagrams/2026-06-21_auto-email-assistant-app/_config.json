@@ -1,0 +1,21 @@
+{
+  "title_emoji": "📧",
+  "title": "Auto Email Assistant",
+  "subtitle": "2026-06-21 快照 · 真 Gmail + 雙 LLM + 私密行事曆(衝突判別) + 耐用佇列 + Jarvis 語音橋 · 給家人每日用",
+  "tabs": [
+    {
+      "id": "overview",
+      "label": "🌐 總圖 Overview",
+      "strong": "系統總覽",
+      "desc": "來源 → 佇列 → Agent 編排 → 私密行事曆/草稿/摘要/語音（皆待確認）",
+      "mmd": "system_architecture.mmd"
+    },
+    {
+      "id": "mindmap",
+      "label": "🧠 Mind Map 思維導圖",
+      "strong": "概念導圖",
+      "desc": "點任一節點看其祖先/子孫關聯",
+      "mmd": "mindmap.mmd"
+    }
+  ]
+}

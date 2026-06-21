@@ -1,0 +1,70 @@
+%%{init: {'flowchart': {'rankSpacing': 70, 'nodeSpacing': 30, 'curve': 'basis'}} }%%
+flowchart LR
+  classDef uin fill:#74c7ec,stroke:#1e66f5,color:#1e1e2e;
+  classDef ui fill:#cba6f7,stroke:#8839ef,color:#1e1e2e;
+  classDef pipe fill:#f9e2af,stroke:#df8e1d,color:#1e1e2e;
+  classDef safe fill:#fab387,stroke:#fe640b,color:#1e1e2e;
+  classDef model fill:#a6e3a1,stroke:#40a02b,color:#1e1e2e;
+  classDef out fill:#f5c2e7,stroke:#ea76cb,color:#1e1e2e;
+  classDef worker fill:#94e2d5,stroke:#179299,color:#1e1e2e;
+
+  U([使用者 ▶ 執行分流]):::uin
+  SCH[/node-cron 排程/]:::worker
+
+  subgraph RENDERER[Renderer · React UI]
+    SB[Sidebar + LLM 切換]:::ui
+    INBOX[InboxView 分類卡]:::ui
+    AP[AgentPanel 即時軌跡]:::ui
+    SET[Settings 金鑰/排程]:::ui
+  end
+
+  subgraph MAIN[Electron Main · Node]
+    TRI[/triage runner/]:::pipe
+    subgraph AGENTS[Agent 協作 Orchestrator]
+      OR[/Orchestrator 判斷複雜度/]:::pipe
+      CL[/Classifier/]:::pipe
+      EV[/EventExtractor/]:::pipe
+      RE[/Researcher/]:::pipe
+      DR[/ReplyDrafter/]:::pipe
+      VF[/Verifier 對抗複核/]:::pipe
+    end
+    HR[HardRules 硬規則]:::safe
+    LS[/localScan 唯讀/]:::model
+  end
+
+  subgraph LLMP[LLMProvider 抽象]
+    GE[(Gemini · 預設免費)]:::model
+    CLD[(Claude · 切換)]:::model
+  end
+
+  subgraph OUTS[輸出 · 皆待確認]
+    ICS[.ics + VALARM 提前提醒]:::out
+    EML[.eml 草稿 · 不寄]:::out
+  end
+
+  SEC[(safeStorage 加密金鑰)]:::model
+  STORE[(settings / processed JSON)]:::model
+
+  U --> INBOX --> TRI
+  SCH -.-> TRI
+  TRI --> OR
+  OR --> CL
+  OR --> EV
+  OR --> RE
+  OR --> DR
+  OR --> VF
+  RE --> LS
+  CL --> GE
+  DR --> GE
+  RE --> GE
+  CL -.-> CLD
+  DR -.-> CLD
+  RE -.-> CLD
+  HR -. inject .-> AGENTS
+  EV --> ICS
+  DR --> EML
+  TRI -.-> AP
+  SET --> SEC
+  TRI --> STORE
+  ICS --> INBOX
+  EML --> INBOX
