@@ -5,11 +5,11 @@
       {
         "id": "m_human_request",
         "from": "chen.wei@partner-co.example",
-        "to": ["a2264563@gmail.com"],
+        "to": ["owner@example.com"],
         "subject": "下週自動化專案 — 想請你比較 n8n vs Make，順便約個時間",
         "date": "2026-06-20T02:10:00Z",
-        "snippet": "昀翰你好，我們內部要決定自動化平台，想請你幫忙整理一份 n8n 與 Make 的比較...",
-        "body": "昀翰你好，\n\n我們內部下週要拍板採用哪個自動化平台。知道你 n8n 經驗豐富，想請你幫忙：\n1) 整理一份「n8n vs Make」的一頁比較（成本、自架 vs SaaS、整合數量、學習曲線），下週五 (6/26) 前給我們參考；\n2) 方便的話這週四 (6/25) 下午 3 點線上開個 30 分鐘的會討論一下？\n\n感謝！\nWei"
+        "snippet": "朋友你好，我們內部要決定自動化平台，想請你幫忙整理一份 n8n 與 Make 的比較...",
+        "body": "朋友你好，\n\n我們內部下週要拍板採用哪個自動化平台。知道你 n8n 經驗豐富，想請你幫忙：\n1) 整理一份「n8n vs Make」的一頁比較（成本、自架 vs SaaS、整合數量、學習曲線），下週五 (6/26) 前給我們參考；\n2) 方便的話這週四 (6/25) 下午 3 點線上開個 30 分鐘的會討論一下？\n\n感謝！\nWei"
       }
     ]
   },
@@ -19,11 +19,11 @@
       {
         "id": "m_nvidia",
         "from": "104news@ms1.104.com.tw",
-        "to": ["a2264563@gmail.com"],
+        "to": ["owner@example.com"],
         "subject": "【免費報名】NVIDIA DLI 官方課程說明會｜7/2 (四) 20:00 線上",
         "date": "2026-06-20T05:27:48Z",
         "snippet": "NVIDIA DLI 官方課程 - 擴散模型的生成式 AI 應用，開課說明會 7/2(四) 20:00...",
-        "body": "Hi 昀翰，\nNVIDIA DLI 官方課程「擴散模型的生成式 AI 應用」開課說明會將於 7/2(四) 20:00-21:00 線上直播舉行。正式課程 7/25(六) 開課，2 天假日線上直播、中文教材、雲端 GPU 免費、提供完課證書。立即免費報名：https://example.tibame.tw/nvidia-dli"
+        "body": "Hi 朋友，\nNVIDIA DLI 官方課程「擴散模型的生成式 AI 應用」開課說明會將於 7/2(四) 20:00-21:00 線上直播舉行。正式課程 7/25(六) 開課，2 天假日線上直播、中文教材、雲端 GPU 免費、提供完課證書。立即免費報名：https://example.tibame.tw/nvidia-dli"
       }
     ]
   },
@@ -33,7 +33,7 @@
       {
         "id": "m_esun_pwd",
         "from": "esun@esunsec.com.tw",
-        "to": ["a2264563@gmail.com"],
+        "to": ["owner@example.com"],
         "subject": "【玉山證券】定期變更登入密碼提醒通知",
         "date": "2026-06-20T13:28:40Z",
         "snippet": "您的證券帳戶最後變更登入密碼日期已超過一年，請定期變更...",
@@ -47,7 +47,7 @@
       {
         "id": "m_google_security",
         "from": "no-reply@accounts.google.com",
-        "to": ["a2264563@gmail.com"],
+        "to": ["owner@example.com"],
         "subject": "安全性快訊：新裝置登入活動",
         "date": "2026-06-19T14:52:40Z",
         "snippet": "我們發現您的 Google 帳戶有新的登入活動，並新增了密碼金鑰...",
@@ -61,7 +61,7 @@
       {
         "id": "m_cathay_charge",
         "from": "service@pxbillrc01.cathaybk.com.tw",
-        "to": ["a2264563@gmail.com"],
+        "to": ["owner@example.com"],
         "subject": "【國泰世華銀行】網路消費通知 (請勿直接回覆)",
         "date": "2026-06-19T14:57:11Z",
         "snippet": "正卡卡號末四碼7433於 JUST OKAY LIMITED 交易 NT$3,426...",
@@ -75,7 +75,7 @@
       {
         "id": "m_linkedin_job",
         "from": "jobalerts-noreply@linkedin.com",
-        "to": ["a2264563@gmail.com"],
+        "to": ["owner@example.com"],
         "subject": "Appier 的 Program Manager - AI Agent，請立即應徵",
         "date": "2026-06-20T09:35:50Z",
         "snippet": "Yunhan，符合你條件的新職缺...",
@@ -88,8 +88,8 @@
     "messages": [
       {
         "id": "m_psmf_self",
-        "from": "a2264563@gmail.com",
-        "to": ["a2264563@gmail.com"],
+        "from": "owner@example.com",
+        "to": ["owner@example.com"],
         "subject": "PSMF 明日菜單 2026-06-21",
         "date": "2026-06-20T13:05:07Z",
         "snippet": "PSMF DAY 20 全 WPI 液體日 低普林護腎...",
@@ -103,7 +103,7 @@
       {
         "id": "m_decathlon",
         "from": "information@email.decathlon.tw",
-        "to": ["a2264563@gmail.com"],
+        "to": ["owner@example.com"],
         "subject": "【台灣迪卡儂】你的會員點數即將到期！",
         "date": "2026-06-19T01:09:34Z",
         "snippet": "運動可以帶來很多好處，會員點數即將到期...",
