@@ -52,6 +52,7 @@ export interface ExtractedEvent {
   timeZone: string
   reminders: number[] // minutes before start
   sourceNote: string
+  location?: string // place/address from the email (for travel-time "leave by" alarm); empty if online/none
 }
 
 export interface DraftReply {
@@ -116,7 +117,8 @@ export interface AppSettings {
   jarvisEventsDir: string
   vipSenders: string[]
   theme: string
-  onboarded: boolean // first-run wizard completed/skipped
+  onboarded: boolean
+  homeAddress: string // your usual departure point (home/office) for travel-time "leave by" alarms; empty → fall back to IP location // first-run wizard completed/skipped
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -137,5 +139,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   jarvisEventsDir: '',
   vipSenders: [],
   theme: 'linear-app',
-  onboarded: false
+  onboarded: false,
+  homeAddress: ''
 }

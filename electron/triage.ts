@@ -146,6 +146,15 @@ export async function runTriage(win: BrowserWindow | null, settings: AppSettings
       for (const ev of outcome.events) {
         try {
           const res = await addAppCalendarEvent(ev)
+          // Travel-time "leave by" estimate (best-effort, free OSM services).
+          if (ev.location && res.event?.id) {
+            try {
+              const { estimateTravelMin } = await import('./travel')
+              const { updateAppCalendarEvent } = await import('../src/calendar/appCalendar')
+              const mins = await estimateTravelMin(settings.homeAddress, ev.location)
+              if (mins != null) await updateAppCalendarEvent(res.event.id, { travelMin: mins, location: ev.location })
+            } catch { /* travel estimate is optional */ }
+          }
           if (res.status === 'merged') merged++
           if (res.status === 'conflict') {
             conflictMsgs.push(`「${ev.summary}」(${ev.startISO}) 與「${res.conflicts.map((c) => c.summary).join('、')}」時段重疊`)

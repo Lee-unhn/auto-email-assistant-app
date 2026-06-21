@@ -134,6 +134,9 @@ export function Settings({ settings, onSave }: Props) {
           <input type="checkbox" checked={s.remindersEnabled} onChange={(e) => patch({ remindersEnabled: e.target.checked })} />
           <span>事件前跳鬧鐘提醒（依各事件設定的提前提醒時間，App 開著才會響）</span>
         </label>
+        <div className="meta" style={{ marginTop: 10 }}>我的出發地（家/公司地址）— 用來估「該出發了」時間；留空＝用大概位置</div>
+        <input className="field" style={{ marginTop: 6 }} placeholder="例：台北市信義區市府路45號" value={s.homeAddress} onChange={(e) => patch({ homeAddress: e.target.value })} />
+        <div className="meta" style={{ marginTop: 4 }}>信件裡有地點的行程，會在開始前算好車程跳「🚗 該出發了」。</div>
         <label className="row" style={{ gap: 6, marginTop: 10 }}>
           <input type="checkbox" checked={!!cfg.googleCalendarEnabled} onChange={(e) => patchCfg({ googleCalendarEnabled: e.target.checked })} />
           <span>同時寫進 Google 行事曆（預設關閉）</span>

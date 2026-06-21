@@ -54,6 +54,21 @@ async function tick(getWin: () => BrowserWindow | null): Promise<void> {
         n.show()
       }
     }
+
+    // Travel-time "leave by" alarm: fire (travelMin + 10 min buffer) before start.
+    if (typeof e.travelMin === 'number' && e.travelMin > 0) {
+      const lead = e.travelMin + 10
+      const trigger = start - lead * 60_000
+      const key = `${e.id}:leave`
+      if (now >= trigger && now < start + 120_000 && !set.has(key)) {
+        set.add(key)
+        changed = true
+        const where = clean(e.location || e.summary)
+        const n = new Notification({ title: '🚗 該出發了', body: `到「${where}」約需 ${e.travelMin} 分鐘車程（${e.startISO.slice(11, 16)} 開始）` })
+        n.on('click', () => { const w = getWin(); if (w) { w.show(); w.focus() } })
+        n.show()
+      }
+    }
   }
 
   // Prune fired keys for events that are well in the past (keep the file small).

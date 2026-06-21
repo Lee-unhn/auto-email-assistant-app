@@ -46,6 +46,18 @@
 
 ---
 
+## 行事曆提醒 + 車程估算 DO/DON'T（2026-06-21，§3.2）
+
+**提醒（鬧鐘）**:`electron/reminders.ts` 每分鐘掃 app 行事曆,到各事件提前提醒分鐘數就跳桌面通知;已 fire 的記在 `~/.auto-email-assistant-reminders.json`(不重複)。**App 開著才會響**(關窗縮系統匣仍算開)。`remindersEnabled` 可關。
+
+**車程「該出發了」(免費 OSM,免金鑰)**
+- DO：地理編碼用 **Nominatim**(`nominatim.openstreetmap.org`)→ 必帶 `User-Agent`、低頻(我們快取 `~/.auto-email-assistant-geocache.json`,遠低於 1 req/s 政策)。
+- DO：車程用 **OSRM 公共車伺服器**(`routing.openstreetmap.de/routed-car`)→ 座標是 `lon,lat` 順序。失敗自動退回 haversine/30km·h 粗估。
+- DO：出發地 = 設定 `homeAddress`(geocode);沒填才用 **ip-api**(免金鑰,城市級粗估)。目的地 = EventExtractor 抽的 `location`。
+- DON'T：別把地址送到 OSM 以外端點;別公開(只本機用途);線上會議/無地點不估。
+- DON'T：別每分鐘呼叫路徑服務 → 車程在「事件加入時算一次」存 `CalEvent.travelMin`,排程器只讀不重算。
+- 限制:OSRM 公共伺服器無 SLA、不含即時路況(估值為一般車程);要更準/即時路況才考慮付費 Google(屆時報價)。
+
 ## 0. Phase 完成度
 
 | Phase | 內容 | 完成度 | 證據 |

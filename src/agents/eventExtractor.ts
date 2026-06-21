@@ -16,7 +16,8 @@ function normalize(e: RawEvent): ExtractedEvent | null {
     endISO: endValid ? (e.endISO as string) : e.startISO,
     timeZone: e.timeZone ?? 'Asia/Taipei',
     reminders: e.reminders?.length ? e.reminders : [1440, 60],
-    sourceNote: e.sourceNote ?? '由 auto-email-assistant 從信件自動建立。不需要可刪。'
+    sourceNote: e.sourceNote ?? '由 auto-email-assistant 從信件自動建立。不需要可刪。',
+    location: typeof e.location === 'string' && e.location.trim() ? e.location.trim() : undefined
   }
 }
 
@@ -26,9 +27,9 @@ function normalize(e: RawEvent): ExtractedEvent | null {
 export async function extractEvents(thread: EmailThread, ctx: AgentCtx): Promise<ExtractedEvent[]> {
   ctx.emit({ agent: 'EventExtractor', status: 'start', message: '抽取所有日期/時間…' })
   const system = `你是行事曆事件抽取器。今天是 ${ctx.today}（Asia/Taipei）。抽出信中「所有明確、可排程」的事件（會議、說明會、截止日、約診、聚餐等）。一封信可能有多個（如「一週行程」）。沒有任何明確日期就回空陣列 []。`
-  const user = `從郵件抽出所有事件。每個 summary 前綴「[自動·待確認]」。startISO/endISO 用本地牆鐘時間不帶時區（例 2026-07-02T20:00:00）。reminders 用分鐘陣列（預設 [1440,60]）。sourceNote 寫來源寄件人+主旨+「不需要可刪」。\n\n郵件：\n${threadText(
+  const user = `從郵件抽出所有事件。每個 summary 前綴「[自動·待確認]」。startISO/endISO 用本地牆鐘時間不帶時區（例 2026-07-02T20:00:00）。reminders 用分鐘陣列（預設 [1440,60]）。sourceNote 寫來源寄件人+主旨+「不需要可刪」。location 填實體地點或地址（用於估算車程）；線上會議或無地點就留空字串。\n\n郵件：\n${threadText(
     thread.messages
-  )}\n\n只回 JSON 陣列：[{"summary","startISO","endISO","timeZone":"Asia/Taipei","reminders":[1440,60],"sourceNote"}, ...]（沒有則回 []）`
+  )}\n\n只回 JSON 陣列：[{"summary","startISO","endISO","timeZone":"Asia/Taipei","reminders":[1440,60],"sourceNote","location":""}, ...]（沒有則回 []）`
   try {
     const r = await ctx.llm.complete({ system, user, json: true, maxTokens: 1500 })
     const parsed = extractJson<any>(r.text)

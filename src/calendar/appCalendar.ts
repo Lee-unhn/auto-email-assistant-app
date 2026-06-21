@@ -18,6 +18,8 @@ export interface CalEvent {
   source: string
   createdAt: string
   confirmed?: boolean // user has reviewed this auto-added event (clears the 待你確認 state)
+  location?: string // place/address (drives the travel-time "leave by" alarm)
+  travelMin?: number // estimated driving minutes from home → location (computed once)
 }
 
 const FILE = path.join(os.homedir(), '.auto-email-assistant-calendar.json')
@@ -94,7 +96,8 @@ export async function addAppCalendarEvent(
     reminders: ev.reminders,
     description: ev.sourceNote,
     source,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    location: ev.location
   }
   events.push(rec)
   await write(events)
@@ -149,6 +152,15 @@ export async function confirmAppCalendarEvent(id: string): Promise<void> {
 export async function removeAppCalendarEvent(id: string): Promise<void> {
   const events = await read()
   await write(events.filter((x) => x.id !== id))
+}
+
+// Patch a stored event (e.g. attach computed travelMin).
+export async function updateAppCalendarEvent(id: string, patch: Partial<CalEvent>): Promise<void> {
+  const events = await read()
+  const e = events.find((x) => x.id === id)
+  if (!e) return
+  Object.assign(e, patch)
+  await write(events)
 }
 
 export async function listAppCalendar(): Promise<CalEvent[]> {
