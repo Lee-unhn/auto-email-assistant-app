@@ -110,6 +110,7 @@ export interface AppSettings {
   scheduleCron: string
   scheduleEnabled: boolean
   digestEnabled: boolean
+  notifyEnabled: boolean
   jarvisBridgeEnabled: boolean
   jarvisEventsDir: string
   vipSenders: string[]
@@ -129,6 +130,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   scheduleCron: '7 8 * * *',
   scheduleEnabled: true, // proactive by default — the assistant runs daily without the user pressing a button
   digestEnabled: true,
+  notifyEnabled: true, // generic desktop toast on triage complete (no PII in text)
   jarvisBridgeEnabled: false, // default off (voice module is opt-in, requires Jarvis installed)
   jarvisEventsDir: '',
   vipSenders: [],

@@ -1,5 +1,5 @@
 import path from 'path'
-import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, shell, Tray, Menu, Notification } from 'electron'
 import { IPC } from '../src/ipc/channels'
 import type { AppSettings, LLMProviderId } from '../src/types'
 import { createProvider } from '../src/llm'
@@ -12,6 +12,36 @@ import { readConfig, writeConfig } from '../src/config/localConfig'
 import { applySchedule } from './scheduler'
 
 let win: BrowserWindow | null = null
+let tray: Tray | null = null
+let isQuitting = false
+let notifiedHide = false
+
+function showWindow(): void {
+  if (win) { win.show(); win.focus() } else createWindow()
+}
+
+// Tray: navigation-only (open / run read-only triage / quit). NEVER any send/delete action.
+function createTray(): void {
+  const iconPath = path.join(app.getAppPath(), 'build', 'icon.ico')
+  try {
+    tray = new Tray(iconPath)
+  } catch {
+    return // tray icon missing → skip; app still works
+  }
+  tray.setToolTip('郵件小幫手')
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      { label: '開啟小幫手', click: showWindow },
+      {
+        label: '立即整理收件匣',
+        click: async () => { if (win) runTriage(win, await settingsWithKeys()) }
+      },
+      { type: 'separator' },
+      { label: '結束', click: () => { isQuitting = true; app.quit() } }
+    ])
+  )
+  tray.on('click', showWindow)
+}
 
 async function settingsWithKeys(): Promise<AppSettings> {
   const s = await loadSettings()
@@ -42,6 +72,17 @@ function createWindow(): void {
   } else {
     win.loadFile(path.join(__dirname, '../renderer/index.html'))
   }
+
+  // Close → hide to tray (keep running so scheduled auto-triage still fires).
+  win.on('close', (e) => {
+    if (isQuitting) return
+    e.preventDefault()
+    win?.hide()
+    if (!notifiedHide && Notification.isSupported()) {
+      notifiedHide = true
+      new Notification({ title: '郵件小幫手', body: '仍在背景執行，會依排程自動整理。要完全結束請用系統匣圖示。' }).show()
+    }
+  })
 }
 
 function registerIpc(): void {
@@ -125,13 +166,21 @@ app.whenReady().then(async () => {
   app.setAppUserModelId('io.leeunhn.autoemailassistant') // Windows: required for notifications/Action Center
   registerIpc()
   createWindow()
+  createTray()
   const s = await loadSettings()
   applySchedule(s, () => win && runTriage(win, s))
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    else showWindow()
   })
 })
 
+app.on('before-quit', () => { isQuitting = true })
+
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit()
+  // With close-to-tray the window is hidden, not destroyed, so this normally won't
+  // fire from the user; only quit if we're genuinely quitting.
+  if (process.platform !== 'darwin' && isQuitting) app.quit()
 })
+
+app.on('quit', () => { tray?.destroy() })

@@ -159,6 +159,10 @@ export function Settings({ settings, onSave }: Props) {
           <span>每次整理後，寄一封「每日摘要」給我自己（只寄給自己）</span>
         </label>
         <label className="row" style={{ gap: 6, marginTop: 10 }}>
+          <input type="checkbox" checked={s.notifyEnabled} onChange={(e) => patch({ notifyEnabled: e.target.checked })} />
+          <span>整理完成時跳桌面通知（只顯示數量，不含信件內容）</span>
+        </label>
+        <label className="row" style={{ gap: 6, marginTop: 10 }}>
           <input type="checkbox" checked={s.jarvisBridgeEnabled} onChange={(e) => patch({ jarvisBridgeEnabled: e.target.checked })} />
           <span>把重要事項念出來（需先安裝語音模組）</span>
         </label>

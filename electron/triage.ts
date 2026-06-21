@@ -1,5 +1,5 @@
 import path from 'path'
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, Notification } from 'electron'
 import type { AgentEvent, AppSettings, Classification, EmailThread, ThreadOutcome, TriageRun } from '../src/types'
 import { createProvider } from '../src/llm'
 import { SampleMailProvider } from '../src/mail/sample'
@@ -184,6 +184,20 @@ export async function runTriage(win: BrowserWindow | null, settings: AppSettings
   run.finishedAt = new Date().toISOString()
   win?.webContents.send(IPC.triageProgress, { done, total: fresh.length, subject: '完成' })
   await saveRun(run)
+
+  // Generic desktop notification on completion — NEVER includes subject/sender/PII.
+  if (settings.notifyEnabled) {
+    try {
+      if (Notification.isSupported()) {
+        const need = run.outcomes.filter((o) => o.draft || o.events?.length || o.flagNote).length
+        new Notification({
+          title: '郵件小幫手',
+          body: need > 0 ? `整理完成，有 ${need} 件待你查看` : '整理完成，沒有需要處理的信',
+          silent: false
+        }).show()
+      }
+    } catch { /* notifications are best-effort */ }
+  }
 
   // Daily-digest self-notification (only to the user's own address).
   if (settings.digestEnabled) {
