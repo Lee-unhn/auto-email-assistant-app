@@ -1,4 +1,4 @@
-%%{init: {'flowchart': {'rankSpacing': 68, 'nodeSpacing': 28, 'curve': 'basis'}} }%%
+%%{init: {'flowchart': {'rankSpacing': 65, 'nodeSpacing': 28, 'curve': 'basis'}} }%%
 flowchart LR
   classDef uin fill:#74c7ec,stroke:#1e66f5,color:#1e1e2e;
   classDef ui fill:#cba6f7,stroke:#8839ef,color:#1e1e2e;
@@ -8,79 +8,63 @@ flowchart LR
   classDef out fill:#f5c2e7,stroke:#ea76cb,color:#1e1e2e;
   classDef worker fill:#94e2d5,stroke:#179299,color:#1e1e2e;
 
-  U([使用者/家人 ▶ 雙擊啟動 / 開機常駐]):::uin
-  SCH[/watch·queue 間隔輪詢/]:::worker
+  BAT([啟動小幫手.bat / 開介面.bat]):::uin
+  SCH[/node-cron 排程/]:::worker
 
-  subgraph RENDER[Renderer · React UI]
-    SB[Sidebar · LLM 切換]:::ui
-    INBOX[InboxView 分類卡]:::ui
-    CALV[CalendarView 私密行事曆]:::ui
-    AP[AgentPanel 即時軌跡]:::ui
-    SET[Settings 金鑰/行事曆/排程]:::ui
+  subgraph UI[Renderer · React]
+    SET[Settings: Gmail/金鑰/VIP/Google opt-in]:::ui
+    INBOX[InboxView: 分類卡 + 附件 + urgency]:::ui
+    CALV[CalendarView: 私密 + 衝突紅標]:::ui
+    AP[AgentPanel 即時]:::ui
   end
 
-  subgraph MAIN[Electron Main · 背景 daemon]
-    TRI[/triage / queue runner/]:::pipe
-    QUEUE[(taskStore 佇列 DB · 失敗重試)]:::model
-    subgraph AG[Agent Orchestrator · 判複雜度]
-      OR[/Orchestrator/]:::pipe
-      CL[/Classifier 11 類/]:::pipe
+  subgraph CORE[Electron Main + headless queue 共用核心]
+    RUN[/triage / queue runner/]:::pipe
+    subgraph AG[Agent 協作 Orchestrator]
+      CL[/Classifier +urgency/]:::pipe
       EV[/EventExtractor 多事件/]:::pipe
       RE[/Researcher 本機+web/]:::pipe
       DR[/ReplyDrafter/]:::pipe
       VF[/Verifier 對抗複核/]:::pipe
     end
-    CONF[/衝突判別 · 同會議合併 / 不同警告/]:::pipe
-    HR[HardRules 硬規則]:::safe
-    KEY[(keyloader 金鑰)]:::model
-    CFG[(localConfig 設定)]:::model
+    HR[HardRules + VIP]:::safe
+    LS[/localScan 唯讀/]:::model
+    CONF[/conflict 合併 · 警告/]:::pipe
   end
 
-  subgraph LLM[LLMProvider · 自動選]
-    GE[(Gemini · 限流+模型 fallback)]:::model
-    CLD[(Claude CLI · +web 搜尋)]:::model
+  subgraph LLMP[LLMProvider 抽象 自動選]
+    GE[(Gemini 限流+模型fallback)]:::model
+    CLD[(Claude CLI web search)]:::model
   end
 
-  subgraph SRC[郵件來源]
-    IMAP[(真 Gmail · IMAP app-pw)]:::model
-    SAMP[(樣本 fixtures)]:::model
+  IMAP[(Gmail IMAP app-password 含附件)]:::model
+  TS[(TaskStore 共用帳本 messageId · atomic)]:::model
+  SEC[(keyloader secrets / localConfig)]:::model
+
+  subgraph OUTS[輸出 · 皆待確認 / 不外洩]
+    PCAL[私密行事曆 +提前提醒]:::out
+    GCAL[Google 行事曆 opt-in]:::out
+    EML[.eml 草稿 不寄]:::out
+    DIG[摘要 email 只寄自己]:::out
+    JV[Jarvis 語音事件]:::out
   end
 
-  subgraph OUT[輸出 · 皆待確認]
-    PCAL[app 私密行事曆 · 含提前提醒]:::out
-    GCAL[Google 行事曆 · opt-in]:::out
-    EML[.eml 草稿 · 不寄]:::out
-    DIG[每日摘要 email · 只寄自己]:::out
-    JBR[Jarvis 事件佇列]:::out
-  end
-
-  JARVIS[[Jarvis · 語音念出/通知面]]:::worker
-
-  U --> RENDER
-  SCH -.-> TRI
-  INBOX --> TRI
-  IMAP --> TRI
-  SAMP --> TRI
-  TRI --> QUEUE
-  QUEUE --> OR
-  OR --> CL
-  CL --> EV
-  EV --> CONF
-  OR --> RE
-  OR --> DR
-  DR --> VF
+  BAT --> RUN
+  SCH -.-> RUN
+  INBOX --> RUN
+  RUN --> IMAP
+  RUN --> TS
+  RUN --> AG
   CL --> GE
   CL -.-> CLD
-  RE --> CLD
-  HR -. inject .-> AG
+  RE --> LS
+  EV --> CONF
   CONF --> PCAL
   CONF -.-> GCAL
   DR --> EML
-  TRI --> DIG
-  TRI --> JBR
-  CONF -. 衝突警告 .-> JBR
-  JBR --> JARVIS
-  KEY --> LLM
-  CFG --> GCAL
+  RUN --> DIG
+  RUN -.-> JV
+  HR -. inject .-> AG
+  SET --> SEC
   PCAL --> CALV
-  TRI -.-> AP
+  RUN -.-> AP

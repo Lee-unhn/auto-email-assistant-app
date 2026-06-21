@@ -46,8 +46,70 @@ to family PCs; don't rely on on-device `npm run build`.
 ## Architecture
 Three bundles (`electron-vite`): **main** (Node services), **preload** (contextBridge),
 **renderer** (React). Swap-clean abstractions: `LLMProvider`, `MailProvider`,
-`CalendarProvider`. In-app agent orchestrator judges complexity and fans out.
-Latest diagram: `docs/diagrams/2026-06-21_auto-email-assistant-app/architecture.html`.
+`CalendarProvider`. The GUI and the headless daemon share one durable task ledger;
+an in-app agent orchestrator judges complexity and fans out.
+
+```mermaid
+flowchart LR
+  classDef uin fill:#74c7ec,stroke:#1e66f5,color:#1e1e2e;
+  classDef ui fill:#cba6f7,stroke:#8839ef,color:#1e1e2e;
+  classDef pipe fill:#f9e2af,stroke:#df8e1d,color:#1e1e2e;
+  classDef safe fill:#fab387,stroke:#fe640b,color:#1e1e2e;
+  classDef model fill:#a6e3a1,stroke:#40a02b,color:#1e1e2e;
+  classDef out fill:#f5c2e7,stroke:#ea76cb,color:#1e1e2e;
+  classDef worker fill:#94e2d5,stroke:#179299,color:#1e1e2e;
+
+  BAT([啟動小幫手.bat / 開介面.bat]):::uin
+  SCH[/node-cron schedule/]:::worker
+  subgraph UI[Renderer · React]
+    SET[Settings: Gmail / keys / VIP / Google opt-in]:::ui
+    INBOX[Inbox: category + attachments + urgency]:::ui
+    CALV[Calendar: private + conflict]:::ui
+  end
+  subgraph CORE[Electron Main + headless queue · shared core]
+    RUN[/triage / queue runner/]:::pipe
+    subgraph AG[Agent Orchestrator]
+      CL[/Classifier +urgency/]:::pipe
+      EV[/EventExtractor multi/]:::pipe
+      RE[/Researcher local+web/]:::pipe
+      DR[/ReplyDrafter/]:::pipe
+      VF[/Verifier/]:::pipe
+    end
+    HR[HardRules + VIP]:::safe
+    CONF[/conflict merge·warn/]:::pipe
+  end
+  subgraph LLMP[LLMProvider · auto-select]
+    GE[(Gemini: ratelimit+fallback)]:::model
+    CLD[(Claude CLI: web search)]:::model
+  end
+  IMAP[(Gmail IMAP app-password)]:::model
+  TS[(TaskStore shared ledger · atomic)]:::model
+  subgraph OUTS[Outputs · all draft / private]
+    PCAL[Private calendar + reminders]:::out
+    GCAL[Google Calendar opt-in]:::out
+    EML[.eml draft · never sent]:::out
+    DIG[Digest email · to self only]:::out
+    JV[Jarvis voice events]:::out
+  end
+  BAT --> RUN
+  SCH -.-> RUN
+  INBOX --> RUN
+  RUN --> IMAP
+  RUN --> TS
+  RUN --> AG
+  CL --> GE
+  CL -.-> CLD
+  EV --> CONF
+  CONF --> PCAL
+  CONF -.-> GCAL
+  DR --> EML
+  RUN --> DIG
+  RUN -.-> JV
+  HR -. inject .-> AG
+  PCAL --> CALV
+```
+
+Interactive version (tabs / pan / zoom / mind-map): `docs/diagrams/2026-06-21_auto-email-assistant-app/architecture.html`.
 
 ## Hard rules (enforced)
 Never send mail · never touch security/password settings · never move money ·
