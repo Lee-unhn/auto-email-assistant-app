@@ -66,7 +66,7 @@ export function CalendarView() {
             <div className="section-title" style={{ marginTop: 0 }}>{day}</div>
             {groups[day].map((e) => (
               <div className={`card${conflictIds.has(e.id) ? ' conflict' : ''}`} key={e.id} style={{ marginBottom: 8 }}>
-                <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ fontWeight: 590, display: 'flex', alignItems: 'center', gap: 8 }}>
                   {conflictIds.has(e.id) && <span className="badge danger">⚠ 時段衝突</span>}
                   <span>{e.summary.replace(/^\[自動[^\]]*\]\s*/, '')}</span>
                   <span className="badge warn">待你確認</span>

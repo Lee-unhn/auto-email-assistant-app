@@ -13,32 +13,36 @@
   --fg: #f7f8f8;
   --fg-2: #d0d6e0;
   --muted: #8a8f98;
-  --meta: #62666d;
+  --meta: #82868f;   /* AA: ≥4.5:1 on --bg and --surface (was #62666d ≈3.4:1) */
 
   --border: rgba(255, 255, 255, 0.08);
   --border-soft: rgba(255, 255, 255, 0.05);
   --border-strong: rgba(255, 255, 255, 0.12);
 
-  --accent: #5e6ad2;
-  --accent-hover: #828fff;
+  --accent: #5e6ad2;        /* surface/CTA accent — fills, active bar, borders */
+  --accent-hover: #828fff;  /* text/link accent on dark (AA ≈5:1) */
   --accent-active: #4752c4;
   --accent-soft: rgba(94, 106, 210, 0.14);
   --accent-glow: rgba(94, 106, 210, 0.28);
 
+  /* semantic FILL/border colors + brighter TEXT variants that clear AA on the -soft fills */
   --success: #27a644;
   --success-soft: rgba(39, 166, 68, 0.14);
-  --warn: #eab308;
-  --warn-soft: rgba(234, 179, 8, 0.12);
+  --success-text: #4ed16e;
+  --warn: #f5b637;          /* lifted amber for dark (was #eab308, muddy at 11px) */
+  --warn-soft: rgba(245, 182, 55, 0.14);
+  --warn-text: #f5c536;
   --danger: #dc2626;
   --danger-soft: rgba(220, 38, 38, 0.12);
+  --danger-text: #f1707a;
 
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-pill: 9999px;
 
-  --elev-card: 0 1px 2px rgba(0, 0, 0, 0.28), 0 0 0 1px var(--border-soft);
-  --focus-ring: 0 0 0 2px var(--accent-glow), 0 4px 12px rgba(0, 0, 0, 0.2);
+  --elev-card: 0 0 0 1px var(--border-soft);   /* ring only — no drop shadow on dark (tonal lift instead) */
+  --focus-ring: 0 0 0 2px #828fff, 0 0 0 4px rgba(8, 9, 10, 0.9);   /* solid, ≥3:1 even on accent fields */
 
   --motion-fast: 130ms;
   --motion-base: 180ms;
@@ -124,9 +128,9 @@ body {
 
 .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 590; letter-spacing: -0.003em; padding: 3px 9px 3px 8px; border-radius: var(--radius-pill); border: 1px solid var(--border); background: rgba(255, 255, 255, 0.03); color: var(--fg-2); white-space: nowrap; }
 .badge .swatch { width: 7px; height: 7px; border-radius: var(--radius-pill); box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.04); }
-.badge.danger { color: var(--danger); border-color: rgba(220, 38, 38, 0.4); background: var(--danger-soft); }
-.badge.warn { color: var(--warn); border-color: rgba(234, 179, 8, 0.4); background: var(--warn-soft); }
-.badge.ok { color: var(--success); border-color: rgba(39, 166, 68, 0.4); background: var(--success-soft); }
+.badge.danger { color: var(--danger-text); border-color: rgba(220, 38, 38, 0.4); background: var(--danger-soft); }
+.badge.warn { color: var(--warn-text); border-color: rgba(245, 182, 55, 0.4); background: var(--warn-soft); }
+.badge.ok { color: var(--success-text); border-color: rgba(39, 166, 68, 0.4); background: var(--success-soft); }
 
 .detail { overflow: auto; display: flex; flex-direction: column; padding-right: 4px; }
 .section-title { font-size: 11px; font-weight: 590; text-transform: uppercase; letter-spacing: 0.06em; color: var(--meta); margin: 18px 0 8px; display: flex; align-items: center; gap: 8px; }
@@ -139,9 +143,9 @@ textarea.draft:focus { outline: none; border-color: var(--accent); box-shadow: v
 .agent-name { font-weight: 590; min-width: 88px; color: var(--fg); letter-spacing: -0.006em; }
 .tag-start, .tag-done, .tag-skip, .tag-error { font-size: 10.5px; font-weight: 590; letter-spacing: 0.02em; padding: 1px 7px; border-radius: var(--radius-pill); flex-shrink: 0; }
 .tag-start { color: var(--accent-hover); background: var(--accent-soft); }
-.tag-done { color: var(--success); background: var(--success-soft); }
-.tag-skip { color: var(--meta); background: rgba(255, 255, 255, 0.04); }
-.tag-error { color: var(--danger); background: var(--danger-soft); }
+.tag-done { color: var(--success-text); background: var(--success-soft); }
+.tag-skip { color: var(--muted); background: rgba(255, 255, 255, 0.04); }
+.tag-error { color: var(--danger-text); background: var(--danger-soft); }
 
 input.field, select.field, textarea.field { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--fg); border-radius: var(--radius-sm); padding: 8px 11px; font-size: 13px; font-family: var(--font); transition: border-color var(--motion-fast) var(--ease), box-shadow var(--motion-fast) var(--ease); }
 input.field::placeholder { color: var(--meta); }

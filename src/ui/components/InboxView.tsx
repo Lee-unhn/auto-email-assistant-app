@@ -46,7 +46,7 @@ export function InboxView({ threads, run, liveTrails }: Props) {
         ) : (
           <>
             <div className="card">
-              <div style={{ fontSize: 15, fontWeight: 600 }}>{thread.messages[0]?.subject}</div>
+              <div style={{ fontSize: 15, fontWeight: 590 }}>{thread.messages[0]?.subject}</div>
               <div className="meta" style={{ marginTop: 4 }}>
                 {thread.messages[0]?.from} · {new Date(thread.messages[0]?.date ?? '').toLocaleString()}
               </div>
@@ -73,7 +73,7 @@ export function InboxView({ threads, run, liveTrails }: Props) {
                     <div style={{ marginTop: 10, color: 'var(--warn)' }}>⚠ {outcome.flagNote}</div>
                   )}
                   {outcome.conflictNote && (
-                    <div style={{ marginTop: 10, color: 'var(--danger)', fontWeight: 600 }}>⚠ 時段衝突：{outcome.conflictNote}</div>
+                    <div style={{ marginTop: 10, color: 'var(--danger)', fontWeight: 590 }}>⚠ 時段衝突：{outcome.conflictNote}</div>
                   )}
                 </div>
 
@@ -82,7 +82,7 @@ export function InboxView({ threads, run, liveTrails }: Props) {
                     <div className="section-title">行事曆（已加 {outcome.events.length} 筆到你的私人行事曆）</div>
                     {outcome.events.map((ev, i) => (
                       <div className="card" key={i} style={{ marginBottom: 8 }}>
-                        <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ fontWeight: 590, display: 'flex', alignItems: 'center', gap: 8 }}>
                           <span>{ev.summary.replace(/^\[自動[^\]]*\]\s*/, '')}</span>
                           <span className="badge warn">待你確認</span>
                         </div>

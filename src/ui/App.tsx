@@ -78,15 +78,15 @@ export function App() {
             <small>你的私人郵件小幫手</small>
           </div>
         </div>
-        <button className={`nav-btn ${view === 'inbox' ? 'active' : ''}`} onClick={() => setView('inbox')}>📥 收件匣</button>
-        <button className={`nav-btn ${view === 'calendar' ? 'active' : ''}`} onClick={() => setView('calendar')}>📅 行事曆</button>
-        <button className={`nav-btn ${view === 'settings' ? 'active' : ''}`} onClick={() => setView('settings')}>⚙ 設定</button>
+        <button className={`nav-btn ${view === 'inbox' ? 'active' : ''}`} aria-current={view === 'inbox' ? 'page' : undefined} onClick={() => setView('inbox')}><span aria-hidden="true">📥</span> 收件匣</button>
+        <button className={`nav-btn ${view === 'calendar' ? 'active' : ''}`} aria-current={view === 'calendar' ? 'page' : undefined} onClick={() => setView('calendar')}><span aria-hidden="true">📅</span> 行事曆</button>
+        <button className={`nav-btn ${view === 'settings' ? 'active' : ''}`} aria-current={view === 'settings' ? 'page' : undefined} onClick={() => setView('settings')}><span aria-hidden="true">⚙</span> 設定</button>
 
         <div className="side-label">AI 模型</div>
         <div style={{ padding: '0 6px' }}>
-          <div className="seg">
-            <button className={settings.provider === 'gemini' ? 'on' : ''} onClick={() => saveSettings({ provider: 'gemini' })}>Gemini</button>
-            <button className={settings.provider === 'claude' ? 'on' : ''} onClick={() => saveSettings({ provider: 'claude' })}>Claude</button>
+          <div className="seg" role="radiogroup" aria-label="AI 模型">
+            <button role="radio" aria-checked={settings.provider === 'gemini'} className={settings.provider === 'gemini' ? 'on' : ''} onClick={() => saveSettings({ provider: 'gemini' })}>Gemini</button>
+            <button role="radio" aria-checked={settings.provider === 'claude'} className={settings.provider === 'claude' ? 'on' : ''} onClick={() => saveSettings({ provider: 'claude' })}>Claude</button>
           </div>
           <div className="meta" style={{ marginTop: 8 }}>
             {settings.provider === 'gemini'
@@ -122,8 +122,8 @@ export function App() {
         </div>
 
         {error && (
-          <div style={{ margin: '10px 18px 0', padding: '10px 14px', background: 'rgba(220,38,38,0.12)', border: '1px solid var(--danger)', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-            <span>⚠ {error.msg}</span>
+          <div role="alert" style={{ margin: '10px 18px 0', padding: '10px 14px', background: 'var(--danger-soft)', border: '1px solid rgba(220,38,38,0.4)', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+            <span><span aria-hidden="true">⚠</span> {error.msg}</span>
             <span style={{ whiteSpace: 'nowrap' }}>
               {error.toSettings && <button className="btn sm" style={{ marginRight: 8 }} onClick={() => { setView('settings'); setError(null) }}>前往設定</button>}
               <button className="btn sm" onClick={() => setError(null)}>關閉</button>
