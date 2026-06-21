@@ -5,8 +5,8 @@ import type { ExtractedEvent } from '../types'
 import { writeJsonAtomic } from '../util/atomicWrite'
 
 // App-internal PRIVATE calendar (local JSON, never leaves the machine).
-// This is the DEFAULT calendar target — important for users whose Google Calendar
-// is public (e.g. a public figure). Google Calendar sync is opt-in & separate.
+// This is the DEFAULT calendar target — keeps private events local when a Google
+// Calendar may be public/shared. Google Calendar sync is opt-in & separate.
 export interface CalEvent {
   id: string
   summary: string

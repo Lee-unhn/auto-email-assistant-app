@@ -18,8 +18,8 @@ schedule-conflict detection, drafts replies (**never sends**), finds supporting 
 ## Status
 - **Mail:** real Gmail via IMAP app-password (entered in Settings — no file editing).
 - **LLM:** auto-selects Claude Code CLI if installed, else Gemini free. Keys in Settings.
-- **Calendar:** private in-app calendar by default (a member is a public figure → not the
-  public Google Calendar). Google Calendar sync is **opt-in** (Apps Script webhook).
+- **Calendar:** private in-app calendar by default (private events stay local, not on a
+  possibly-public Google Calendar). Google Calendar sync is **opt-in** (Apps Script webhook).
 - **Conflicts:** same meeting at one slot → merged; different meetings overlap → warned.
 - **Drafts / send / pay / delete / settings:** drafts only; the app never sends, pays,
   deletes, or changes settings (see `SAFETY-CHECKLIST.md`).
@@ -143,7 +143,7 @@ read-only. All auto artifacts are tagged `[自動·待確認]`.
 | 語音（選用） | 有 Jarvis 的機器把事件念出來 |
 
 ### 隱私
-**預設只寫 app 私密行事曆（本機，不外流）**——因為有家人是公眾人物、Google 行事曆公開；
+**預設只寫 app 私密行事曆（本機，不外流）**——因為 Google 行事曆可能是公開/共用的，私人行程不該外流；
 要寫 Google 行事曆需在設定**主動開啟**。
 
 ### 安裝（每位家人一次，約 10 分鐘）

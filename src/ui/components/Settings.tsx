@@ -141,7 +141,7 @@ export function Settings({ settings, onSave }: Props) {
           <span>同時寫進 Google 行事曆（預設關閉）</span>
         </label>
         <div style={{ color: 'var(--warn)', fontSize: 12, marginTop: 6 }}>
-          ⚠ 若你的 Google 行事曆是公開的（例如公眾人物），私人行程會被外部看到。確定需要再開啟。
+          ⚠ 若你的 Google 行事曆是公開/共用的，私人行程會被外部看到。確定需要再開啟。
         </div>
         {cfg.googleCalendarEnabled && (
           <input className="field" style={{ marginTop: 8 }} placeholder="Google 行事曆 Apps Script /exec 網址（見 google-calendar.gs）"
