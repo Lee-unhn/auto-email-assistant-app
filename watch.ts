@@ -1,3 +1,7 @@
+// @deprecated — use queue.ts (durable shared taskStore ledger) instead. This file
+// keeps a SEPARATE non-atomic ~/.auto-email-assistant-watch.json processed-set and is
+// NOT wired into run-assistant.ps1 / the .bat launchers. Kept for reference only.
+//
 // Email watcher — polls Gmail at an interval, runs the pipeline on each NEW unread
 // (idempotent via a processed-id file), writes .ics / local drafts, emits Jarvis
 // events. Claude mode by default (no free-tier quota wall → short intervals OK).

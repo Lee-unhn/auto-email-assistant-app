@@ -6,7 +6,6 @@ import { writeJsonAtomic } from '../src/util/atomicWrite'
 
 const ud = () => app.getPath('userData')
 const settingsFile = () => path.join(ud(), 'settings.json')
-const processedFile = () => path.join(ud(), 'processed.json')
 const runsDir = () => path.join(ud(), 'runs')
 
 export async function loadSettings(): Promise<AppSettings> {
@@ -19,18 +18,6 @@ export async function loadSettings(): Promise<AppSettings> {
 
 export async function saveSettings(s: AppSettings): Promise<void> {
   await writeJsonAtomic(settingsFile(), s)
-}
-
-export async function loadProcessed(): Promise<string[]> {
-  try {
-    return JSON.parse(await fs.readFile(processedFile(), 'utf-8'))
-  } catch {
-    return []
-  }
-}
-
-export async function saveProcessed(ids: string[]): Promise<void> {
-  await writeJsonAtomic(processedFile(), [...new Set(ids)])
 }
 
 export async function saveRun(run: TriageRun): Promise<void> {
