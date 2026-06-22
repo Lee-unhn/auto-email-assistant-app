@@ -4,6 +4,7 @@ import { ImapFlow } from 'imapflow'
 import { simpleParser } from 'mailparser'
 import type { EmailThread, DraftReply } from '../types'
 import type { MailProvider } from './MailProvider'
+import { groupIntoThreads, type BuiltMessage } from './threadGroup'
 
 // Real Gmail via IMAP app-password (read) + IMAP APPEND to Drafts (never sends).
 export class ImapMailProvider implements MailProvider {
@@ -27,7 +28,8 @@ export class ImapMailProvider implements MailProvider {
     })
   }
 
-  private async toThread(uid: string, source: Buffer): Promise<EmailThread> {
+  // Build one message + its thread key (References root / In-Reply-To / own Message-ID).
+  private async toBuilt(uid: string, source: Buffer): Promise<BuiltMessage> {
     const p = await simpleParser(source)
     const attachments = (p.attachments ?? [])
       .filter((a) => a.contentDisposition !== 'inline' || a.filename)
@@ -35,44 +37,47 @@ export class ImapMailProvider implements MailProvider {
     const to = (p.to && 'value' in p.to ? p.to.value : []).map((a) => a.address ?? '').filter(Boolean)
     const cc = (p.cc && 'value' in p.cc ? p.cc.value : []).map((a) => a.address ?? '').filter(Boolean)
     const self = this.user.toLowerCase()
+    const refs = Array.isArray(p.references) ? p.references : p.references ? [p.references] : []
+    const key = (refs[0] || p.inReplyTo || p.messageId || uid).trim()
+    const date = p.date ?? new Date()
     return {
-      id: uid,
-      messages: [
-        {
-          id: p.messageId ?? uid,
-          from: p.from?.text ?? '',
-          to,
-          ...(cc.length ? { cc } : {}),
-          addressedToMe: to.some((a) => a.toLowerCase() === self),
-          subject: p.subject ?? '(no subject)',
-          date: (p.date ?? new Date()).toISOString(),
-          snippet: (p.text ?? '').replace(/\s+/g, ' ').slice(0, 160),
-          body: (p.text ?? '').slice(0, 8000),
-          ...(attachments.length ? { attachments } : {})
-        }
-      ]
+      key,
+      dateMs: date.getTime(),
+      msg: {
+        id: p.messageId ?? uid,
+        from: p.from?.text ?? '',
+        to,
+        ...(cc.length ? { cc } : {}),
+        addressedToMe: to.some((a) => a.toLowerCase() === self),
+        subject: p.subject ?? '(no subject)',
+        date: date.toISOString(),
+        snippet: (p.text ?? '').replace(/\s+/g, ' ').slice(0, 160),
+        body: (p.text ?? '').slice(0, 8000),
+        ...(attachments.length ? { attachments } : {})
+      }
     }
   }
 
   async listThreads(opts?: { maxResults?: number }): Promise<EmailThread[]> {
     const c = this.newClient()
     await c.connect()
-    const out: EmailThread[] = []
+    const built: BuiltMessage[] = []
     const lock = await c.getMailboxLock('INBOX')
     try {
       const uids = (await c.search({ seen: false }, { uid: true })) || []
       const recent = uids.slice(-(opts?.maxResults ?? 15))
       if (recent.length) {
         for await (const msg of c.fetch(recent.join(','), { uid: true, source: true }, { uid: true })) {
-          if (msg.source) out.push(await this.toThread(String(msg.uid), msg.source))
+          if (msg.source) built.push(await this.toBuilt(String(msg.uid), msg.source))
         }
       }
     } finally {
       lock.release()
       await c.logout()
     }
-    // Skip the assistant's own digest self-notifications (avoid a feedback loop).
-    return out.filter((t) => !/郵件助理摘要|auto-email-assistant/i.test(t.messages[0]?.subject ?? '')).reverse()
+    // Group same-conversation messages into one thread (newest first), then skip the
+    // assistant's own digest self-notifications (avoid a feedback loop).
+    return groupIntoThreads(built).filter((t) => !/郵件助理摘要|auto-email-assistant/i.test(t.messages[0]?.subject ?? ''))
   }
 
   async getThread(id: string): Promise<EmailThread | null> {
@@ -82,7 +87,8 @@ export class ImapMailProvider implements MailProvider {
     try {
       const msg = await c.fetchOne(id, { source: true }, { uid: true })
       if (!msg || !msg.source) return null
-      return await this.toThread(id, msg.source)
+      const b = await this.toBuilt(id, msg.source)
+      return { id: b.msg.id, messages: [b.msg] }
     } finally {
       lock.release()
       await c.logout()
