@@ -1,6 +1,7 @@
 import type { AgentEvent, AppSettings, EmailThread, LLMProviderId, TriageRun } from '../types'
 import type { CalEvent } from '../calendar/appCalendar'
 import type { LocalConfig } from '../config/localConfig'
+import type { ThreadStatus } from '../state/threadStatus'
 
 // IPC channel names — single source shared by preload + renderer.
 export const IPC = {
@@ -12,6 +13,8 @@ export const IPC = {
   listCalendar: 'calendar:list',
   confirmCalendar: 'calendar:confirm',
   removeCalendar: 'calendar:remove',
+  getThreadStatuses: 'thread:statuses',
+  setThreadStatus: 'thread:setStatus',
   getConfig: 'config:get',
   saveConfig: 'config:save',
   saveSecrets: 'secrets:saveFiles',
@@ -34,6 +37,8 @@ export interface AppApi {
   listCalendar(): Promise<CalEvent[]>
   confirmCalendar(id: string): Promise<void>
   removeCalendar(id: string): Promise<void>
+  getThreadStatuses(): Promise<Record<string, ThreadStatus>>
+  setThreadStatus(id: string, patch: Partial<ThreadStatus>): Promise<Record<string, ThreadStatus>>
   getConfig(): Promise<LocalConfig>
   saveConfig(patch: Partial<LocalConfig>): Promise<LocalConfig>
   saveSecrets(s: { gmailAddress?: string; gmailAppPassword?: string; geminiKey?: string }): Promise<{ ok: boolean }>

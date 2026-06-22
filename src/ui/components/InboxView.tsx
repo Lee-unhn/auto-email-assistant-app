@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { AgentEvent, EmailThread, ThreadOutcome, TriageRun } from '../../types'
+import type { ThreadStatus, StatusKind } from '../../state/threadStatus'
 import { bucketOf, BUCKET_LABEL, type Bucket } from '../../rules/taxonomy'
 import { CategoryBadge } from './CategoryBadge'
 import { AgentPanel } from './AgentPanel'
@@ -13,6 +14,14 @@ interface Props {
 
 const ORDER: Bucket[] = ['act', 'watch', 'skip']
 
+// effective status now (a snooze whose time has passed reads as open again)
+function effStatus(s: ThreadStatus | undefined): StatusKind {
+  if (!s) return 'open'
+  if (s.status === 'snoozed' && s.snoozedUntil && new Date(s.snoozedUntil).getTime() <= Date.now()) return 'open'
+  return s.status
+}
+const plusDays = (n: number) => { const d = new Date(); d.setHours(8, 0, 0, 0); d.setDate(d.getDate() + n); return d.toISOString() }
+
 export function InboxView({ threads, run, liveTrails }: Props) {
   const [sel, setSel] = useState<string | null>(threads[0]?.id ?? null)
   const [filter, setFilter] = useState<Bucket | null>(null)
@@ -25,17 +34,26 @@ export function InboxView({ threads, run, liveTrails }: Props) {
   // Controlled draft text so the user's in-app edits are kept (and copied), not silently lost.
   const editedDraft = sel && outcome?.draft ? draftEdits[sel] ?? outcome.draft.body : ''
 
-  // group threads into the 3 priority buckets (unprocessed → act, so they stay visible)
+  // Persistent per-thread user state (handled / snoozed) — keyed by Message-ID.
+  const [statuses, setStatuses] = useState<Record<string, ThreadStatus>>({})
+  useEffect(() => { window.api.getThreadStatuses().then(setStatuses) }, [run])
+  const midOf = (t: EmailThread) => t.messages[0]?.id ?? t.id
+  const statusOf = (t: EmailThread) => effStatus(statuses[midOf(t)])
+  const setStatus = async (t: EmailThread, patch: Partial<ThreadStatus>) => { setStatuses(await window.api.setThreadStatus(midOf(t), patch)); setSel(null) }
+
+  // group OPEN threads into the 3 priority buckets (handled/snoozed are hidden)
   const groups: Record<Bucket, EmailThread[]> = { act: [], watch: [], skip: [] }
+  let hidden = 0
   for (const t of threads) {
+    if (statusOf(t) !== 'open') { hidden++; continue }
     const o = outcomeOf(t.id)
     const b = o ? bucketOf(o.classification.category, o.classification.urgency) : 'act'
     groups[b].push(t)
   }
-  const replyCount = run?.outcomes.filter((o) => o.classification.category === 'ACTION_REPLY').length ?? 0
+  const replyOpen = groups.act.filter((t) => outcomeOf(t.id)?.classification.category === 'ACTION_REPLY').length
   const eventCount = run?.outcomes.reduce((n, o) => n + (o.events?.length ?? 0), 0) ?? 0
   const watchCount = groups.watch.length
-  const actNeeds = replyCount + eventCount + watchCount
+  const actNeeds = replyOpen + eventCount + watchCount
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14, height: '100%' }}>
@@ -50,12 +68,12 @@ export function InboxView({ threads, run, liveTrails }: Props) {
           ) : (
             <div className="today-stats">
               <button className={`stat ${filter === 'act' ? 'on' : ''}`} onClick={() => setFilter(filter === 'act' ? null : 'act')}>
-                <Icon name="mail" size={15} /> {replyCount} 要回覆 · {eventCount} 個行程
+                <Icon name="mail" size={15} /> {replyOpen} 等你回覆 · {eventCount} 個行程
               </button>
               <button className={`stat ${filter === 'watch' ? 'on' : ''}`} onClick={() => setFilter(filter === 'watch' ? null : 'watch')}>
                 <Icon name="alert" size={15} /> {watchCount} 要留意
               </button>
-              <span className="muted" style={{ fontSize: 12 }}>其餘 {groups.skip.length} 封已歸到可略過</span>
+              <span className="muted" style={{ fontSize: 12 }}>其餘 {groups.skip.length} 封已歸到可略過{hidden ? ` · 已處理/延後 ${hidden}` : ''}</span>
             </div>
           )}
         </div>
@@ -92,6 +110,11 @@ export function InboxView({ threads, run, liveTrails }: Props) {
             </div>
           ) : (
             <>
+              <div className="row" style={{ gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+                <button className="btn sm" onClick={() => setStatus(thread, { status: 'handled' })}><Icon name="check" size={14} /> 標為已處理</button>
+                <button className="btn sm" onClick={() => setStatus(thread, { status: 'snoozed', snoozedUntil: plusDays(1) })}><Icon name="clock" size={14} /> 明天再說</button>
+                <button className="btn sm" onClick={() => setStatus(thread, { status: 'snoozed', snoozedUntil: plusDays(7) })}>下週再說</button>
+              </div>
               {outcome ? (
                 <>
                   <div className="section-title" style={{ marginTop: 0 }}>這封信是什麼</div>

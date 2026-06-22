@@ -8,6 +8,7 @@ import { getKey, setKey, hasKey } from './secrets'
 import { readGeminiKey, readGmailCreds, writeGmailCreds, writeGeminiKey, hardenSecrets } from './keyloader'
 import { runTriage, getMailProvider } from './triage'
 import { listAppCalendar, confirmAppCalendarEvent, removeAppCalendarEvent } from '../src/calendar/appCalendar'
+import { getThreadStatuses, setThreadStatus } from '../src/state/threadStatus'
 import { readConfig, writeConfig } from '../src/config/localConfig'
 import { applySchedule } from './scheduler'
 import { startReminderScheduler } from './reminders'
@@ -143,6 +144,8 @@ function registerIpc(): void {
   ipcMain.handle(IPC.listCalendar, () => listAppCalendar())
   ipcMain.handle(IPC.confirmCalendar, (_e, id: string) => confirmAppCalendarEvent(id))
   ipcMain.handle(IPC.removeCalendar, (_e, id: string) => removeAppCalendarEvent(id))
+  ipcMain.handle(IPC.getThreadStatuses, () => getThreadStatuses())
+  ipcMain.handle(IPC.setThreadStatus, (_e, { id, patch }) => setThreadStatus(id, patch))
   ipcMain.handle(IPC.getConfig, () => readConfig())
   ipcMain.handle(IPC.saveConfig, async (_e, patch) => {
     const next = { ...(await readConfig()), ...patch }
