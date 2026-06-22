@@ -5,7 +5,7 @@ import type { AppSettings, LLMProviderId } from '../src/types'
 import { createProvider } from '../src/llm'
 import { loadSettings, saveSettings, loadLastRun } from './state'
 import { getKey, setKey, hasKey } from './secrets'
-import { readGeminiKey, readGmailCreds, writeGmailCreds, writeGeminiKey } from './keyloader'
+import { readGeminiKey, readGmailCreds, writeGmailCreds, writeGeminiKey, hardenSecrets } from './keyloader'
 import { runTriage, getMailProvider } from './triage'
 import { listAppCalendar, confirmAppCalendarEvent, removeAppCalendarEvent } from '../src/calendar/appCalendar'
 import { readConfig, writeConfig } from '../src/config/localConfig'
@@ -167,6 +167,7 @@ function registerIpc(): void {
 
 app.whenReady().then(async () => {
   app.setAppUserModelId('io.leeunhn.autoemailassistant') // Windows: required for notifications/Action Center
+  hardenSecrets() // lock pre-existing plaintext secret files to the current user (best-effort)
   registerIpc()
   createWindow()
   createTray()

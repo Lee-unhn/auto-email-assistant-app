@@ -17,10 +17,13 @@ export function InboxView({ threads, run, liveTrails }: Props) {
   const [sel, setSel] = useState<string | null>(threads[0]?.id ?? null)
   const [filter, setFilter] = useState<Bucket | null>(null)
   const [copied, setCopied] = useState(false)
+  const [draftEdits, setDraftEdits] = useState<Record<string, string>>({})
   const outcomeOf = (id: string): ThreadOutcome | undefined => run?.outcomes.find((o) => o.threadId === id)
   const thread = threads.find((t) => t.id === sel) ?? null
   const outcome = sel ? outcomeOf(sel) : undefined
   const trail = (sel && liveTrails[sel]?.length ? liveTrails[sel] : outcome?.agentTrail) ?? []
+  // Controlled draft text so the user's in-app edits are kept (and copied), not silently lost.
+  const editedDraft = sel && outcome?.draft ? draftEdits[sel] ?? outcome.draft.body : ''
 
   // group threads into the 3 priority buckets (unprocessed → act, so they stay visible)
   const groups: Record<Bucket, EmailThread[]> = { act: [], watch: [], skip: [] }
@@ -126,10 +129,15 @@ export function InboxView({ threads, run, liveTrails }: Props) {
                       <div className="section-title">回覆草稿（要你按下寄出才會送）</div>
                       <div className="card">
                         <div className="meta">主旨：{outcome.draft.subject} · 收件：{outcome.draft.to.join(', ')}</div>
-                        <textarea className="draft" defaultValue={outcome.draft.body} style={{ marginTop: 8 }} />
+                        <textarea
+                          className="draft"
+                          style={{ marginTop: 8 }}
+                          value={editedDraft}
+                          onChange={(e) => sel && setDraftEdits((m) => ({ ...m, [sel]: e.target.value }))}
+                        />
                         <div className="row" style={{ marginTop: 8, flexWrap: 'wrap' }}>
-                          <button className="btn sm" onClick={() => { navigator.clipboard?.writeText(outcome.draft!.body); setCopied(true); setTimeout(() => setCopied(false), 1500) }}>
-                            <Icon name="copy" size={14} /> {copied ? '已複製' : '複製草稿'}
+                          <button className="btn sm" onClick={() => { navigator.clipboard?.writeText(editedDraft); setCopied(true); setTimeout(() => setCopied(false), 1500) }}>
+                            <Icon name="copy" size={14} /> {copied ? '已複製（含你的修改）' : '複製草稿'}
                           </button>
                           {outcome.draftPath && (
                             <button className="btn sm" onClick={() => window.api.revealPath(outcome.draftPath!)}>

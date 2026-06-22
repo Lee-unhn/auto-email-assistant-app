@@ -1,6 +1,33 @@
 import { promises as fs } from 'fs'
 import os from 'os'
 import path from 'path'
+import { execFile } from 'child_process'
+import { promisify } from 'util'
+
+const execFileP = promisify(execFile)
+
+// Lock a secret file down to the current OS user only. The headless daemon reads
+// these same files as the same user, so this keeps it working while removing
+// other-user / inherited (Administrators, Users) read access on a shared PC.
+async function hardenFile(file: string): Promise<void> {
+  try {
+    if (process.platform === 'win32') {
+      const user = os.userInfo().username
+      // /inheritance:r removes inherited ACEs; /grant:r leaves only this user with full control.
+      await execFileP('icacls', [file, '/inheritance:r', '/grant:r', `${user}:F`], { windowsHide: true })
+    } else {
+      await fs.chmod(file, 0o600)
+    }
+  } catch { /* best-effort hardening; never block on it */ }
+}
+
+// One-time hardening of any pre-existing plaintext secret files (call on startup).
+export async function hardenSecrets(): Promise<void> {
+  for (const f of ['gmail_smtp.env', 'gemini_api_key.env']) {
+    const fp = path.join(SECRETS, f)
+    try { await fs.access(fp); await hardenFile(fp) } catch { /* file may not exist */ }
+  }
+}
 
 // Reads ONLY the two specific secret files this app needs, at runtime.
 // Never logs or returns values to anywhere but the in-process caller.
@@ -56,11 +83,15 @@ async function ensureSecretsDir(): Promise<void> {
 // these, so entering creds once in the app makes the background runner work too.
 export async function writeGmailCreds(user: string, pass: string): Promise<void> {
   await ensureSecretsDir()
-  await fs.writeFile(path.join(SECRETS, 'gmail_smtp.env'), `GMAIL_ADDRESS=${user}\nGMAIL_APP_PASSWORD=${pass}\n`, 'utf-8')
+  const file = path.join(SECRETS, 'gmail_smtp.env')
+  await fs.writeFile(file, `GMAIL_ADDRESS=${user}\nGMAIL_APP_PASSWORD=${pass}\n`, 'utf-8')
+  await hardenFile(file) // lock to current user (full mailbox creds)
 }
 export async function writeGeminiKey(key: string): Promise<void> {
   await ensureSecretsDir()
-  await fs.writeFile(path.join(SECRETS, 'gemini_api_key.env'), `GEMINI_API_KEY=${key}\n`, 'utf-8')
+  const file = path.join(SECRETS, 'gemini_api_key.env')
+  await fs.writeFile(file, `GEMINI_API_KEY=${key}\n`, 'utf-8')
+  await hardenFile(file)
 }
 
 export async function readGmailCreds(): Promise<GmailCreds | null> {
