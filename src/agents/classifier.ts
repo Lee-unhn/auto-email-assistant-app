@@ -2,12 +2,15 @@ import type { Classification, EmailThread } from '../types'
 import { extractJson } from '../llm'
 import { HARD_RULES } from '../rules/hardRules'
 import { TAXONOMY_PROMPT, ACTIONABLE, CATEGORY_MAP } from '../rules/taxonomy'
+import { cleanBody } from '../rules/cleanBody'
 import { AgentCtx, threadText } from './types'
 
 export async function classify(thread: EmailThread, ctx: AgentCtx): Promise<Classification> {
   ctx.emit({ agent: 'Classifier', status: 'start', message: '分類郵件意圖…' })
   const system = `你是郵件分流分類器。${HARD_RULES}\n\n分類類別：\n${TAXONOMY_PROMPT}`
-  const user = `把這封郵件歸到唯一最適類別。判斷 needsCollaboration（真人請求/需查證/需撰寫回覆/需找材料為 true；單純通知/噪音為 false）。判斷 urgency（需盡快處理、有近期截止或真人等回覆為 "high"；一般 "normal"；純噪音/行銷 "low"）。\n\n郵件：\n${threadText(
+  const m0 = thread.messages[0]
+  const addrHint = m0?.addressedToMe === false ? '\n（注意：你不在收件人 To，可能只是副本(CC)或群發 — 多半不需你親自回覆，needsCollaboration 傾向 false。）' : ''
+  const user = `把這封郵件歸到唯一最適類別。判斷 needsCollaboration（真人請求/需查證/需撰寫回覆/需找材料為 true；單純通知/噪音為 false）。判斷 urgency（需盡快處理、有近期截止或真人等回覆為 "high"；一般 "normal"；純噪音/行銷 "low"）。${addrHint}\n\n郵件：\n${threadText(
     thread.messages
   )}\n\n只回 JSON：{"category":"<ID>","confidence":0..1,"reason":"一句中文","needsCollaboration":true|false,"urgency":"high|normal|low"}`
   try {
@@ -33,9 +36,9 @@ export async function batchClassify(threads: EmailThread[], ctx: AgentCtx): Prom
   const system = `你是郵件分流分類器。${HARD_RULES}\n\n分類類別：\n${TAXONOMY_PROMPT}`
   const items = threads.map((t, i) => {
     const m = t.messages[0]
-    return { i, from: m?.from ?? '', subject: m?.subject ?? '', body: (m?.body ?? '').slice(0, 800) }
+    return { i, from: m?.from ?? '', subject: m?.subject ?? '', addressedToMe: m?.addressedToMe ?? true, body: cleanBody(m?.body ?? '').slice(0, 800) }
   })
-  const user = `把下列每封郵件各歸到唯一最適類別，逐封獨立判斷（每封只看自己的內容）。判斷 needsCollaboration 與 urgency（規則同單封）。\n只回 JSON 陣列，長度與順序必須與輸入完全一致：\n[{"i":0,"category":"<ID>","confidence":0..1,"reason":"一句中文","needsCollaboration":true|false,"urgency":"high|normal|low"}, ...]\n\n郵件們（JSON）：\n${JSON.stringify(items)}`
+  const user = `把下列每封郵件各歸到唯一最適類別，逐封獨立判斷（每封只看自己的內容）。判斷 needsCollaboration 與 urgency（規則同單封）。addressedToMe=false 代表你只是副本/群發，多半不需親自回覆（needsCollaboration 傾向 false）。\n只回 JSON 陣列，長度與順序必須與輸入完全一致：\n[{"i":0,"category":"<ID>","confidence":0..1,"reason":"一句中文","needsCollaboration":true|false,"urgency":"high|normal|low"}, ...]\n\n郵件們（JSON）：\n${JSON.stringify(items)}`
 
   const r = await ctx.llm.complete({ system, user, json: true, maxTokens: Math.min(8000, 120 * threads.length) })
   const arr = extractJson<any[]>(r.text)

@@ -1,5 +1,6 @@
 import type { LLMProvider } from '../llm'
 import type { AgentEvent, AppSettings, Material } from '../types'
+import { cleanBody } from '../rules/cleanBody'
 
 export interface AgentCtx {
   llm: LLMProvider
@@ -12,6 +13,6 @@ export interface AgentCtx {
 
 export function threadText(messages: { from: string; subject: string; date: string; body: string }[]): string {
   return messages
-    .map((m) => `From: ${m.from}\nDate: ${m.date}\nSubject: ${m.subject}\n\n${m.body}`)
+    .map((m) => `From: ${m.from}\nDate: ${m.date}\nSubject: ${m.subject}\n\n${cleanBody(m.body)}`)
     .join('\n\n---\n\n')
 }

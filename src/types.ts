@@ -12,6 +12,8 @@ export interface EmailMessage {
   id: string
   from: string
   to: string[]
+  cc?: string[]
+  addressedToMe?: boolean // true if the user is in To: (vs only CC/bulk) — strong "needs my reply" signal
   subject: string
   date: string // ISO
   snippet: string

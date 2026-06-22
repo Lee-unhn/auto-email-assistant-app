@@ -32,13 +32,18 @@ export class ImapMailProvider implements MailProvider {
     const attachments = (p.attachments ?? [])
       .filter((a) => a.contentDisposition !== 'inline' || a.filename)
       .map((a) => ({ filename: a.filename ?? '(未命名)', type: a.contentType ?? '', size: a.size ?? 0 }))
+    const to = (p.to && 'value' in p.to ? p.to.value : []).map((a) => a.address ?? '').filter(Boolean)
+    const cc = (p.cc && 'value' in p.cc ? p.cc.value : []).map((a) => a.address ?? '').filter(Boolean)
+    const self = this.user.toLowerCase()
     return {
       id: uid,
       messages: [
         {
           id: p.messageId ?? uid,
           from: p.from?.text ?? '',
-          to: (p.to && 'value' in p.to ? p.to.value : []).map((a) => a.address ?? '').filter(Boolean),
+          to,
+          ...(cc.length ? { cc } : {}),
+          addressedToMe: to.some((a) => a.toLowerCase() === self),
           subject: p.subject ?? '(no subject)',
           date: (p.date ?? new Date()).toISOString(),
           snippet: (p.text ?? '').replace(/\s+/g, ' ').slice(0, 160),
