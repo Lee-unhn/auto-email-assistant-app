@@ -26,6 +26,7 @@ export function InboxView({ threads, run, liveTrails }: Props) {
   const [sel, setSel] = useState<string | null>(threads[0]?.id ?? null)
   const [filter, setFilter] = useState<Bucket | null>(null)
   const [copied, setCopied] = useState(false)
+  const [pushed, setPushed] = useState(false)
   const [draftEdits, setDraftEdits] = useState<Record<string, string>>({})
   const outcomeOf = (id: string): ThreadOutcome | undefined => run?.outcomes.find((o) => o.threadId === id)
   const thread = threads.find((t) => t.id === sel) ?? null
@@ -162,13 +163,11 @@ export function InboxView({ threads, run, liveTrails }: Props) {
                           <button className="btn sm" onClick={() => { navigator.clipboard?.writeText(editedDraft); setCopied(true); setTimeout(() => setCopied(false), 1500) }}>
                             <Icon name="copy" size={14} /> {copied ? '已複製（含你的修改）' : '複製草稿'}
                           </button>
-                          {outcome.draftPath && (
-                            <button className="btn sm" onClick={() => window.api.revealPath(outcome.draftPath!)}>
-                              <Icon name="file" size={14} /> 在電腦開啟草稿
-                            </button>
-                          )}
-                          <span className="meta"><Icon name="check" size={13} style={{ verticalAlign: '-2px' }} /> 已存到你的 Gmail 草稿匣，確認後按寄出即可。</span>
+                          <button className="btn sm" onClick={() => { window.api.pushDraftToGmail({ ...outcome.draft!, body: editedDraft }); setPushed(true); setTimeout(() => setPushed(false), 2500) }}>
+                            <Icon name="mail" size={14} /> {pushed ? '已存到 Gmail 草稿匣' : '存到 Gmail 草稿匣'}
+                          </button>
                         </div>
+                        <div className="meta" style={{ marginTop: 6 }}>你的修改不會自動進 Gmail —— 按上面「存到 Gmail 草稿匣」會把<b>目前這個版本</b>存進去，再到 Gmail 按寄出。</div>
                       </div>
                     </>
                   )}
@@ -231,7 +230,14 @@ export function InboxView({ threads, run, liveTrails }: Props) {
 function ThreadRow({ t, sel, onSel, outcome }: { t: EmailThread; sel: string | null; onSel: (id: string) => void; outcome?: ThreadOutcome }) {
   const m = t.messages[0]
   return (
-    <div className={`thread-item ${sel === t.id ? 'sel' : ''} ${outcome?.classification.urgency === 'high' ? 'vip' : ''}`} onClick={() => onSel(t.id)}>
+    <div
+      className={`thread-item ${sel === t.id ? 'sel' : ''} ${outcome?.classification.urgency === 'high' ? 'vip' : ''}`}
+      role="button"
+      tabIndex={0}
+      aria-pressed={sel === t.id}
+      onClick={() => onSel(t.id)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSel(t.id) } }}
+    >
       <div className="subj">{m?.subject}</div>
       <div className="from">{m?.from}</div>
       {outcome && (

@@ -19,5 +19,9 @@ check('> 引用行被剝除', !cleanBody(quoted).includes('引用第一行'))
 check('全引用時 fallback 不回空', cleanBody('> only quoted').length > 0)
 check('純新內容原樣保留', cleanBody('就這樣，謝謝').trim() === '就這樣，謝謝')
 
+// bottom-posting: marker at top, reply written BELOW the quote — must NOT be discarded
+const bottom = `On Mon, Jun 16, 2026 at 9:00 AM, Wang <wang@x.com> wrote:\n> 你下週三有空嗎？\n\n好的，禮拜三沒問題，我準時到。`
+check('下方回覆(bottom-post)不被吃掉', cleanBody(bottom).includes('禮拜三沒問題'))
+
 console.log(`\nRESULT: ${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)

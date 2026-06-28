@@ -176,7 +176,9 @@ export async function runTriage(win: BrowserWindow | null, settings: AppSettings
     }
     if (outcome.draft) {
       try {
-        const { ref } = await mail.saveDraft(outcome.draft)
+        // GUI run: write the local .eml only; the user pushes their (possibly edited)
+        // version to Gmail on demand, so the Gmail draft is never a stale original.
+        const { ref } = await mail.saveDraft(outcome.draft, { gmail: false })
         outcome.draftPath = ref
       } catch (e: any) {
         emit(thread.id, { agent: 'Draft', status: 'error', message: `草稿存檔失敗：${e?.message}` })

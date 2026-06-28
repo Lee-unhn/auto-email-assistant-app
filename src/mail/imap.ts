@@ -95,7 +95,7 @@ export class ImapMailProvider implements MailProvider {
     }
   }
 
-  async saveDraft(draft: DraftReply): Promise<{ ref: string }> {
+  async saveDraft(draft: DraftReply, opts?: { gmail?: boolean }): Promise<{ ref: string }> {
     // build RFC822 (lazy import keeps module loadable under both Node ESM and esbuild)
     const MailComposer = (await import('nodemailer/lib/mail-composer/index.js')).default
     const mime = await new MailComposer({
@@ -111,6 +111,10 @@ export class ImapMailProvider implements MailProvider {
     const safe = draft.subject.replace(/[^\p{L}\p{N} _-]/gu, '_').slice(0, 60) || 'draft'
     const local = path.join(this.draftsDir, `${Date.now()}_${safe}.eml`)
     await fs.writeFile(local, mime)
+
+    // Gmail append is deferred when gmail===false (GUI saves the user's EDITED version on
+    // demand, avoiding a stale Gmail draft); the headless daemon leaves it default (append).
+    if (opts?.gmail === false) return { ref: local }
 
     // APPEND to Gmail Drafts (never sent). Find the \Drafts special-use folder.
     const c = this.newClient()

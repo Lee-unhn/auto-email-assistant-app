@@ -1,4 +1,4 @@
-import type { AgentEvent, AppSettings, EmailThread, LLMProviderId, TriageRun } from '../types'
+import type { AgentEvent, AppSettings, DraftReply, EmailThread, LLMProviderId, TriageRun } from '../types'
 import type { CalEvent } from '../calendar/appCalendar'
 import type { LocalConfig } from '../config/localConfig'
 import type { ThreadStatus } from '../state/threadStatus'
@@ -15,6 +15,7 @@ export const IPC = {
   removeCalendar: 'calendar:remove',
   getThreadStatuses: 'thread:statuses',
   setThreadStatus: 'thread:setStatus',
+  pushDraftToGmail: 'draft:pushToGmail',
   getConfig: 'config:get',
   saveConfig: 'config:save',
   saveSecrets: 'secrets:saveFiles',
@@ -39,6 +40,7 @@ export interface AppApi {
   removeCalendar(id: string): Promise<void>
   getThreadStatuses(): Promise<Record<string, ThreadStatus>>
   setThreadStatus(id: string, patch: Partial<ThreadStatus>): Promise<Record<string, ThreadStatus>>
+  pushDraftToGmail(draft: DraftReply): Promise<{ ref: string }>
   getConfig(): Promise<LocalConfig>
   saveConfig(patch: Partial<LocalConfig>): Promise<LocalConfig>
   saveSecrets(s: { gmailAddress?: string; gmailAppPassword?: string; geminiKey?: string }): Promise<{ ok: boolean }>

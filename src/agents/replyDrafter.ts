@@ -9,7 +9,8 @@ export async function draftReply(
   ctx: AgentCtx
 ): Promise<DraftReply | null> {
   ctx.emit({ agent: 'ReplyDrafter', status: 'start', message: '撰寫回覆草稿（不寄）…' })
-  const last = thread.messages[thread.messages.length - 1]
+  // messages are newest-first after thread grouping → [0] is the latest message; reply to that sender.
+  const last = thread.messages[0]
   const matBlock = materials.length
     ? `\n\n可引用的材料：\n${materials.map((m) => `- ${m.title} (${m.source}) ${m.ref} ${m.snippet}`.trim()).join('\n')}`
     : ''

@@ -202,6 +202,7 @@ a.link:hover { color: var(--fg); text-decoration: underline; text-underline-offs
 .group-toggle { color: var(--muted); font-size: 12px; cursor: pointer; padding: 4px; list-style: none; }
 .group-toggle::-webkit-details-marker { display: none; }
 .group-toggle:hover { color: var(--fg-2); }
+.thread-item:focus-visible, .today-stats .stat:focus-visible, .folddetail > summary:focus-visible, .group-toggle:focus-visible { box-shadow: var(--focus-ring); outline: none; border-radius: var(--radius-md); }
 .thread-item.vip { border-left: 2px solid var(--accent); }
 .thread-item.vip .from { color: var(--accent-hover); }
 

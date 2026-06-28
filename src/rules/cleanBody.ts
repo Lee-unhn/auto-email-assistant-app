@@ -22,7 +22,12 @@ export function cleanBody(body: string): string {
     const m = t.match(re)
     if (m && m.index !== undefined && m.index < cut) cut = m.index
   }
-  let out = t.slice(0, cut)
+  // Bottom-posting guard: if NOTHING (only whitespace) precedes the first quote marker,
+  // the real reply was written BELOW the quote — cutting at the marker would discard it.
+  // In that case keep the whole body (quoted/sig lines are still dropped below).
+  const headEmpty = t.slice(0, cut).trim().length === 0
+  const base = headEmpty ? t : t.slice(0, cut)
+  let out = base
   // drop quoted (>) lines
   out = out.split('\n').filter((l) => !/^\s*>/.test(l)).join('\n')
   // drop a trailing signature block introduced by a "-- " delimiter line

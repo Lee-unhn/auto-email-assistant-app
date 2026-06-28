@@ -25,7 +25,7 @@ export class SampleMailProvider implements MailProvider {
     return all.find((t) => t.id === id) ?? null
   }
 
-  async saveDraft(draft: DraftReply): Promise<{ ref: string }> {
+  async saveDraft(draft: DraftReply, _opts?: { gmail?: boolean }): Promise<{ ref: string }> {
     await fs.mkdir(this.draftsDir, { recursive: true })
     const safe = draft.subject.replace(/[^\p{L}\p{N} _-]/gu, '_').slice(0, 60) || 'draft'
     const file = path.join(this.draftsDir, `${Date.now()}_${safe}.eml`)

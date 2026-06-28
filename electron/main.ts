@@ -146,6 +146,10 @@ function registerIpc(): void {
   ipcMain.handle(IPC.removeCalendar, (_e, id: string) => removeAppCalendarEvent(id))
   ipcMain.handle(IPC.getThreadStatuses, () => getThreadStatuses())
   ipcMain.handle(IPC.setThreadStatus, (_e, { id, patch }) => setThreadStatus(id, patch))
+  ipcMain.handle(IPC.pushDraftToGmail, async (_e, draft) => {
+    const mail = await getMailProvider(await loadSettings())
+    return mail.saveDraft(draft, { gmail: true }) // user-confirmed push of the edited draft
+  })
   ipcMain.handle(IPC.getConfig, () => readConfig())
   ipcMain.handle(IPC.saveConfig, async (_e, patch) => {
     const next = { ...(await readConfig()), ...patch }

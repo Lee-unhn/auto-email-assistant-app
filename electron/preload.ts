@@ -12,6 +12,7 @@ const api: AppApi = {
   removeCalendar: (id) => ipcRenderer.invoke(IPC.removeCalendar, id),
   getThreadStatuses: () => ipcRenderer.invoke(IPC.getThreadStatuses),
   setThreadStatus: (id, patch) => ipcRenderer.invoke(IPC.setThreadStatus, { id, patch }),
+  pushDraftToGmail: (draft) => ipcRenderer.invoke(IPC.pushDraftToGmail, draft),
   getConfig: () => ipcRenderer.invoke(IPC.getConfig),
   saveConfig: (patch) => ipcRenderer.invoke(IPC.saveConfig, patch),
   saveSecrets: (s) => ipcRenderer.invoke(IPC.saveSecrets, s),
