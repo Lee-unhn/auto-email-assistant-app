@@ -32,7 +32,17 @@ export async function hardenSecrets(): Promise<void> {
 // Reads ONLY the two specific secret files this app needs, at runtime.
 // Never logs or returns values to anywhere but the in-process caller.
 // Tolerant of common variable names so we don't have to inspect the files.
+//
+// Central-secrets contract (CLAUDE.md §2.3): the single source of truth is the central
+// store ~/.claude/secrets/*.env. Read order = CENTRAL first, then the read-only mirror
+// G:\_secrets_backup, then (dev only) process.env. Central always wins.
 const SECRETS = path.join(os.homedir(), '.claude', 'secrets')
+const BACKUP = path.join('G:\\', '_secrets_backup')
+
+// Parse a secret file by name: central first, then the G:\ backup mirror.
+async function parseCentral(name: string): Promise<Record<string, string> | null> {
+  return (await parseEnv(path.join(SECRETS, name))) ?? (await parseEnv(path.join(BACKUP, name)))
+}
 
 async function parseEnv(file: string): Promise<Record<string, string> | null> {
   try {
@@ -64,9 +74,9 @@ function pick(m: Record<string, string> | null, names: string[]): string | undef
 }
 
 export async function readGeminiKey(): Promise<string | null> {
-  if (process.env.GEMINI_API_KEY) return process.env.GEMINI_API_KEY
-  const m = await parseEnv(path.join(SECRETS, 'gemini_api_key.env'))
-  return pick(m, ['GEMINI_API_KEY', 'GOOGLE_API_KEY', 'GEMINI_KEY', 'API_KEY']) ?? m?.__bare__ ?? null
+  // Central wins over any project/process residual (contract §2.3); process.env is a last-resort dev override.
+  const m = await parseCentral('gemini_api_key.env')
+  return pick(m, ['GEMINI_API_KEY', 'GOOGLE_API_KEY', 'GEMINI_KEY', 'API_KEY']) ?? m?.__bare__ ?? process.env.GEMINI_API_KEY ?? null
 }
 
 export interface GmailCreds {
@@ -95,7 +105,7 @@ export async function writeGeminiKey(key: string): Promise<void> {
 }
 
 export async function readGmailCreds(): Promise<GmailCreds | null> {
-  const m = await parseEnv(path.join(SECRETS, 'gmail_smtp.env'))
+  const m = await parseCentral('gmail_smtp.env')
   if (!m) return null
   const user = pick(m, ['GMAIL_ADDRESS', 'GMAIL_USER', 'GMAIL_EMAIL', 'EMAIL', 'SMTP_USER', 'SMTP_USERNAME', 'USER', 'USERNAME'])
   const pass = pick(m, ['GMAIL_APP_PASSWORD', 'APP_PASSWORD', 'GMAIL_PASSWORD', 'SMTP_PASS', 'SMTP_PASSWORD', 'PASSWORD', 'PASS'])
